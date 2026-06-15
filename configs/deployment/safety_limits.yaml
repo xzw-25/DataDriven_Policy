@@ -1,0 +1,7 @@
+input_abs_normalized_max: 5.0
+lateral_accel_max_mps2: 6.0
+yaw_rate_max_radps: 1.5
+lateral_error_max_m: 3.0
+speed_max_mps: 40.0
+fallback_on_invalid_input: true
+

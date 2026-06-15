@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vehicle-controller"
+version = "0.1.0"
+description = "Neural vehicle trajectory and speed controller"
+requires-python = ">=3.10"
+dependencies = [
+  "matplotlib>=3.6",
+  "numpy>=1.23",
+  "PyYAML>=6.0",
+  "torch>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "ruff>=0.4"]
+data = ["pandas>=1.5", "pyarrow>=10"]
+deploy = ["onnx>=1.14", "onnxruntime>=1.16"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

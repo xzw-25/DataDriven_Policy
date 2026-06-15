@@ -1,0 +1,9 @@
+steering_min_rad: -8.0
+steering_max_rad: 8.0
+steering_rate_max_radps: 6.0
+drive_torque_max_nm: 3000.0
+drive_torque_rate_max_nmps: 6000.0
+brake_decel_max_mps2: 8.0
+brake_jerk_max_mps3: 10.0
+longitudinal_deadband_mps2: 0.05
+

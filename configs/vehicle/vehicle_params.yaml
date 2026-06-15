@@ -1,0 +1,11 @@
+mass_kg: 1800.0
+wheelbase_m: 2.8
+wheel_radius_m: 0.33
+steering_ratio: 15.0
+drivetrain_ratio: 9.0
+drivetrain_efficiency: 0.9
+rolling_resistance_coefficient: 0.012
+drag_coefficient: 0.30
+frontal_area_m2: 2.3
+air_density_kgpm3: 1.225
+

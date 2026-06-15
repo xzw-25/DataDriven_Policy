@@ -1,0 +1,10 @@
+epochs: 50
+batch_size: 512
+learning_rate: 0.001
+weight_decay: 0.00001
+gradient_clip_norm: 5.0
+steering_loss_weight: 1.0
+acceleration_loss_weight: 1.0
+smoothness_loss_weight: 0.05
+num_workers: 0
+

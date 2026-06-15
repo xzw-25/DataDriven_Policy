@@ -1,0 +1,5 @@
+straight_smoke:
+  maximum_abs_lateral_accel_mps2: 6.0
+  maximum_abs_yaw_rate_radps: 1.5
+  fallback_fraction_max: 0.1
+

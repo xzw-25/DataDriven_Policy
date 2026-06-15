@@ -1,0 +1,18 @@
+seed: 42
+device: cpu
+control_period_s: 0.01
+
+data:
+  config: configs/data/dataset.yaml
+  normalization: configs/data/normalization.yaml
+model:
+  config: configs/model/mlp_controller.yaml
+training:
+  config: configs/training/imitation.yaml
+vehicle:
+  parameters: configs/vehicle/vehicle_params.yaml
+  actuator_limits: configs/vehicle/actuator_limits.yaml
+deployment:
+  runtime: configs/deployment/runtime.yaml
+  safety_limits: configs/deployment/safety_limits.yaml
+

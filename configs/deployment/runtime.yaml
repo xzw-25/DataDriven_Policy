@@ -1,0 +1,6 @@
+backend: torch
+device: cpu
+control_period_s: 0.01
+inference_timeout_ms: 5.0
+model_path: artifacts/exported_models/controller/model.pt
+

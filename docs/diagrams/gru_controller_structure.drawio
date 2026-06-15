@@ -1,0 +1,139 @@
+<mxfile host="65bd71144e" compressed="false">
+    <diagram id="gru-controller" name="GRUController 时序结构">
+        <mxGraphModel dx="2397" dy="2286" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1750" pageHeight="1050" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="GRUController：时序特征控制器" style="text;html=0;align=center;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#172554;" parent="1" vertex="1">
+                    <mxGeometry x="275" y="25" width="1200" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="源码：src/vehicle_controller/models/gru_controller.py | sequence_length = 10 | hidden_size = 64 | num_layers = 1" style="text;html=0;align=center;verticalAlign=middle;fontSize=14;fontColor=#64748B;" parent="1" vertex="1">
+                    <mxGeometry x="275" y="70" width="1200" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="时序输入" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F8FAFC;strokeColor=#64748B;fontColor=#334155;fontStyle=1;fontSize=17;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="130" width="430" height="760" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="GRU 时序编码" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ECFDF5;strokeColor=#059669;fontColor=#065F46;fontStyle=1;fontSize=17;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
+                    <mxGeometry x="510" y="130" width="570" height="760" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="末时刻表示与双输出头" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFF7ED;strokeColor=#EA580C;fontColor=#9A3412;fontStyle=1;fontSize=17;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
+                    <mxGeometry x="1120" y="130" width="590" height="760" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="连续 10 帧归一化特征&#xa;X = [x1, x2, ..., x10]&#xa;每帧 22 维&#xa;形状：[batch, 10, 22]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E0E7FF;strokeColor=#4F46E5;fontColor=#312E81;fontStyle=1;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="100" y="190" width="310" height="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="x1&#xa;22 维" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="75" y="470" width="80" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="x2&#xa;22 维" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="180" y="470" width="80" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="..." style="text;html=0;align=center;verticalAlign=middle;fontSize=24;fontStyle=1;fontColor=#64748B;" parent="1" vertex="1">
+                    <mxGeometry x="275" y="485" width="40" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="x10&#xa;22 维" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="330" y="470" width="80" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="batch_first = True&#xa;时间维位于第 2 维" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F1F5F9;strokeColor=#64748B;fontColor=#334155;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="680" width="290" height="85" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="GRU Cell t=1&#xa;input_size = 22&#xa;hidden_size = 64" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#A7F3D0;strokeColor=#059669;fontColor=#064E3B;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="555" y="350" width="145" height="115" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" value="GRU Cell t=2&#xa;input_size = 22&#xa;hidden_size = 64" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#6EE7B7;strokeColor=#059669;fontColor=#064E3B;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="735" y="350" width="145" height="115" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" value="..." style="text;html=0;align=center;verticalAlign=middle;fontSize=25;fontStyle=1;fontColor=#047857;" parent="1" vertex="1">
+                    <mxGeometry x="895" y="385" width="50" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" value="GRU Cell t=10&#xa;input_size = 22&#xa;hidden_size = 64" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#34D399;strokeColor=#047857;fontColor=#064E3B;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="930" y="350" width="145" height="115" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" value="共享同一组 GRU 参数&#xa;num_layers = 1&#xa;output 形状：[batch, 10, 64]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#D1FAE5;strokeColor=#059669;fontColor=#065F46;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="640" y="600" width="310" height="105" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" value="取最后时间步&#xa;hidden = output[:, -1, :]&#xa;形状：[batch, 64]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontStyle=1;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="1260" y="235" width="310" height="105" as="geometry"/>
+                </mxCell>
+                <mxCell id="31" value="steering_head&#xa;Linear 64 -&gt; 32&#xa;SiLU&#xa;Linear 32 -&gt; 1&#xa;Tanh" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FED7AA;strokeColor=#EA580C;fontColor=#7C2D12;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1170" y="465" width="210" height="145" as="geometry"/>
+                </mxCell>
+                <mxCell id="32" value="acceleration_head&#xa;Linear 64 -&gt; 32&#xa;SiLU&#xa;Linear 32 -&gt; 1&#xa;Tanh" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FDE68A;strokeColor=#D97706;fontColor=#78350F;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1450" y="465" width="210" height="145" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" value="Concat 输出&#xa;[steering_normalized, signed_accel_normalized]&#xa;形状：[batch, 2]，范围 [-1, 1]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFEDD5;strokeColor=#C2410C;fontColor=#7C2D12;fontStyle=1;fontSize=15;" parent="1" vertex="1">
+                    <mxGeometry x="1260" y="720" width="310" height="105" as="geometry"/>
+                </mxCell>
+                <mxCell id="40" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#4F46E5;strokeWidth=2;endArrow=block;" parent="1" source="10" target="11" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="115" y="360"/>
+                            <mxPoint x="115" y="360"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="41" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#2563EB;strokeWidth=2;endArrow=block;" parent="1" source="11" target="20" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="115" y="570"/>
+                            <mxPoint x="500" y="570"/>
+                            <mxPoint x="500" y="408"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="42" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#2563EB;strokeWidth=2;endArrow=block;" parent="1" source="12" target="21" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="290" y="505"/>
+                            <mxPoint x="290" y="330"/>
+                            <mxPoint x="808" y="330"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="43" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#2563EB;strokeWidth=2;endArrow=block;" parent="1" source="14" target="23" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="480" y="505"/>
+                            <mxPoint x="480" y="310"/>
+                            <mxPoint x="1003" y="310"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="44" value="h1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#059669;strokeWidth=3;endArrow=block;fontColor=#065F46;" parent="1" source="20" target="21" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="45" value="h2 ... h9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#059669;strokeWidth=3;endArrow=block;fontColor=#065F46;" parent="1" source="21" target="23" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="46" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#059669;strokeWidth=2;endArrow=block;" parent="1" source="23" target="24" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1003" y="580"/>
+                            <mxPoint x="795" y="580"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="47" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#D97706;strokeWidth=3;endArrow=block;" parent="1" source="24" target="30" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1090" y="653"/>
+                            <mxPoint x="1090" y="287"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="48" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#EA580C;strokeWidth=2;endArrow=block;" parent="1" source="30" target="31" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="49" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#D97706;strokeWidth=2;endArrow=block;" parent="1" source="30" target="32" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="50" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#C2410C;strokeWidth=2;endArrow=block;" parent="1" source="31" target="33" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="51" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;strokeColor=#C2410C;strokeWidth=2;endArrow=block;" parent="1" source="32" target="33" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

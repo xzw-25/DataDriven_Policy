@@ -1,0 +1,13 @@
+name: straight_road
+duration_s: 5.0
+time_step_s: 0.01
+initial_state:
+  x: 0.0
+  y: 0.2
+  yaw: 0.0
+  vx: 3.0
+reference:
+  a_ref_mps2: 0.0
+  v_ref_mps: 5.0
+  s_ref_m: 10.0
+  kappa: 0.0

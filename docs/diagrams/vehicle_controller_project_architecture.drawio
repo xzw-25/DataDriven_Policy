@@ -1,0 +1,232 @@
+<mxfile host="65bd71144e" compressed="false">
+    <diagram id="project-architecture" name="工程总体架构">
+        <mxGraphModel dx="2248" dy="1333" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1200" math="1" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" value="神经网络车辆控制器工程总体架构（22维输入）" style="text;html=1;align=center;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#1F2937;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="20" width="1200" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="subtitle" value="离线数据与训练 → 模型导出 → 在线控制 → 安全监督 → 车辆闭环" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontColor=#6B7280;" parent="1" vertex="1">
+                    <mxGeometry x="430" y="62" width="940" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="offline-bg" value="离线数据、训练与验证" style="swimlane;html=1;startSize=34;rounded=1;fillColor=#F5F3FF;strokeColor=#7C3AED;fontColor=#5B21B6;fontStyle=1;fontSize=16;horizontal=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="110" width="1720" height="290" as="geometry"/>
+                </mxCell>
+                <mxCell id="online-bg" value="在线实时控制链（50–100 Hz）" style="swimlane;html=1;startSize=34;rounded=1;fillColor=#EFF6FF;strokeColor=#2563EB;fontColor=#1E40AF;fontStyle=1;fontSize=16;horizontal=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="430" width="1720" height="530" as="geometry"/>
+                </mxCell>
+                <mxCell id="fallback" value="传统备份控制器&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;横向：Pure Pursuit&lt;br&gt;纵向：a_ref + Kp(v_ref−vx)&lt;br&gt;无扰限幅输出&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontStyle=1;" parent="online-bg" vertex="1">
+                    <mxGeometry x="960" y="325" width="205" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="config" value="统一配置与版本&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;车辆参数 / 执行器限制&lt;br&gt;模型结构 / 安全阈值&lt;br&gt;采样距离 / 控制周期&lt;/font&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#F3F4F6;strokeColor=#6B7280;fontColor=#374151;fontStyle=1;" parent="online-bg" vertex="1">
+                    <mxGeometry x="140" y="390" width="180" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="platform-bg" value="车辆、平台与运行反馈" style="swimlane;html=1;startSize=34;rounded=1;fillColor=#F0FDF4;strokeColor=#16A34A;fontColor=#166534;fontStyle=1;fontSize=16;horizontal=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="990" width="1720" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="raw-data" value="原始数据源&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;仿真 / MPC专家 / 实车日志&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="190" width="155" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="data-process" value="数据准备&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;同步、清洗、22维特征&lt;br&gt;场景级划分与增强&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="285" y="180" width="180" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="dataset" value="Dataset / DataLoader&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;归一化 features_v003&lt;br&gt;曲率、速度、误差均衡采样&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="515" y="180" width="195" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="training" value="神经网络训练&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;监督模仿学习&lt;br&gt;闭环滚动训练 / DAgger&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DDD6FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="760" y="180" width="190" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="offline-eval" value="离线 + 闭环评估&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;MAE / RMSE / 跟踪误差&lt;br&gt;稳定性 / 平顺性 / 实时性&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1000" y="180" width="205" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="export" value="模型导出与版本固化&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;TorchScript / ONNX&lt;br&gt;模型 + 归一化 + 元数据&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DDD6FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1255" y="180" width="210" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="artifact" value="部署模型包 v003&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;22维契约校验&lt;br&gt;车辆与执行器标定版本&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#C4B5FD;strokeColor=#6D28D9;fontColor=#3B0764;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1515" y="175" width="190" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-o1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=2;" parent="1" source="raw-data" target="data-process" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-o2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=2;" parent="1" source="data-process" target="dataset" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-o3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=2;" parent="1" source="dataset" target="training" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-o4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=2;" parent="1" source="training" target="offline-eval" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-o5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=2;" parent="1" source="offline-eval" target="export" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-o6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=2;" parent="1" source="export" target="artifact" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-feedback" value="困难场景回灌" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#9333EA;fontColor=#6B21A8;" parent="1" source="offline-eval" target="dataset" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1100" y="315"/>
+                            <mxPoint x="610" y="315"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="upstream" value="上游输入&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;参考轨迹 / kappa&lt;br&gt;a_ref, v_ref, s_ref&lt;br&gt;定位与车辆状态&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="75" y="528" width="165" height="105" as="geometry"/>
+                </mxCell>
+                <mxCell id="geometry" value="轨迹几何预处理&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;全局→车体坐标&lt;br&gt;5点固定/车速预瞄采样&lt;br&gt;曲率滤波与限幅&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="285" y="520" width="195" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="errors" value="误差计算 / 上游误差&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;e_lat：横向轨迹跟踪误差&lt;br&gt;e_v：纵向速度跟踪误差&lt;br&gt;e_s：纵向位置误差&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="285" y="675" width="195" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="feature-builder" value="22维特征构建&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;轨迹点 10&lt;br&gt;参考/曲率/误差 7&lt;br&gt;车辆状态 5&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BFDBFE;strokeColor=#1D4ED8;fontColor=#1E3A8A;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="535" y="575" width="180" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="validation" value="输入校验与归一化&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;NaN / 超时 / 物理范围&lt;br&gt;features_v003 标准化&lt;br&gt;OOD基础检测&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BFDBFE;strokeColor=#1D4ED8;fontColor=#1E3A8A;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="765" y="575" width="190" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="neural-policy" value="神经网络控制策略&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;原三分支 MLP：128-64&lt;br&gt;可选 Direct MLP：128-128-64&lt;br&gt;输出：δ_des, a_des&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#93C5FD;strokeColor=#1D4ED8;fontColor=#172554;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1005" y="565" width="205" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="allocator" value="纵向控制分配&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;a_des &gt; 0 → 驱动扭矩&lt;br&gt;a_des &lt; 0 → 制动减速度&lt;br&gt;死区与互斥&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BFDBFE;strokeColor=#1D4ED8;fontColor=#1E3A8A;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1260" y="565" width="190" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="limiter" value="执行器约束层&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;转角 / 扭矩 / 制动限幅&lt;br&gt;变化率与 jerk 限制&lt;br&gt;制动优先&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BFDBFE;strokeColor=#1D4ED8;fontColor=#1E3A8A;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1500" y="565" width="190" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="safety" value="安全监督器&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;输入/输出异常&lt;br&gt;e_lat、a_y、r、车速边界&lt;br&gt;放行 / 限制 / 降级&lt;/font&gt;" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FDE68A;strokeColor=#D97706;fontColor=#78350F;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1280" y="755" width="170" height="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="final-command" value="最终车辆指令&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;方向盘转角&lt;br&gt;驱动扭矩&lt;br&gt;制动减速度&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBF7D0;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1510" y="760" width="175" height="115" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-i1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=2;" parent="1" source="upstream" target="geometry" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-i2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=2;" parent="1" source="upstream" target="errors" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="260" y="581"/>
+                            <mxPoint x="260" y="730"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge-i3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=2;" parent="1" source="geometry" target="feature-builder" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-i4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=2;" parent="1" source="errors" target="feature-builder" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-i5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=2;" parent="1" source="feature-builder" target="validation" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-i6" value="有效输入" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=2;fontColor=#1E40AF;" parent="1" source="validation" target="neural-policy" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-i7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=2;" parent="1" source="neural-policy" target="allocator" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-i8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=2;" parent="1" source="allocator" target="limiter" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-i9" value="神经候选指令" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#D97706;strokeWidth=2;fontColor=#92400E;" parent="1" source="limiter" target="safety" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1595" y="720"/>
+                            <mxPoint x="1365" y="720"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge-f1" value="误差与状态" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#D97706;strokeWidth=2;fontColor=#92400E;" parent="1" source="feature-builder" target="fallback" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="625" y="815"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge-f2" value="备份候选指令" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#D97706;strokeWidth=2;fontColor=#92400E;" parent="1" source="fallback" target="safety" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-invalid" value="输入无效 / 推理异常" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#DC2626;fontColor=#991B1B;" parent="1" source="validation" target="fallback" edge="1">
+                    <mxGeometry x="0.2609" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="860" y="780"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge-s1" value="选择最终来源" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#16A34A;strokeWidth=3;fontColor=#166534;" parent="1" source="safety" target="final-command" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-model-deploy" value="加载模型包" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#7C3AED;fontColor=#5B21B6;" parent="1" source="artifact" target="neural-policy" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1610" y="365"/>
+                            <mxPoint x="1110" y="365"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge-config" value="配置注入" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#6B7280;fontColor=#4B5563;" parent="1" source="config" target="validation" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="820" y="900"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="adapter" value="平台适配层&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;ROS 2 / Replay / CAN / 自定义中间件&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="270" y="1040" width="230" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="vehicle" value="车辆与执行器&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;转向 / 驱动 / 制动&lt;br&gt;车辆动力学响应&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBF7D0;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="660" y="1032" width="215" height="85" as="geometry"/>
+                </mxCell>
+                <mxCell id="state-estimation" value="定位与状态估计&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;pose, vx, vy, ax, ay, r, s&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1030" y="1040" width="220" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="runtime-log" value="运行日志与健康监控&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;推理耗时 / 降级原因 / 控制响应&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#D1FAE5;strokeColor=#059669;fontColor=#064E3B;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1410" y="1025" width="240" height="95" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-p1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#16A34A;strokeWidth=2;" parent="1" source="final-command" target="adapter" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1580" y="945"/>
+                            <mxPoint x="385" y="945"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge-p2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#16A34A;strokeWidth=2;" parent="1" source="adapter" target="vehicle" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-p3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#16A34A;strokeWidth=2;" parent="1" source="vehicle" target="state-estimation" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-loop" value="状态反馈" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#16A34A;strokeWidth=2;fontColor=#166534;" parent="1" source="state-estimation" target="upstream" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1140" y="970"/>
+                            <mxPoint x="155" y="970"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge-log1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#059669;" parent="1" source="final-command" target="runtime-log" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1620" y="950"/>
+                            <mxPoint x="1550" y="950"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="edge-log2" value="困难场景" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;dashed=1;strokeColor=#7C3AED;fontColor=#5B21B6;" parent="1" source="runtime-log" target="raw-data" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1715" y="1070"/>
+                            <mxPoint x="1715" y="345"/>
+                            <mxPoint x="155" y="345"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

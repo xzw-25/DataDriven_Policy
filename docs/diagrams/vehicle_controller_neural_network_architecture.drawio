@@ -1,0 +1,279 @@
+<mxfile host="65bd71144e" compressed="false">
+    <diagram id="page1" name="神经网络结构与信号流">
+        <mxGraphModel dx="1028" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1450" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="神经网络车辆控制器：22维信号流与 MLP 结构" style="text;html=0;align=center;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#1F2937;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="20" width="1500" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="features_v003 | controller_v004 | 共享隐藏层 128 - 128 - 64" style="text;html=0;align=center;verticalAlign=middle;fontSize=15;fontColor=#6B7280;" parent="1" vertex="1">
+                    <mxGeometry x="600" y="65" width="1200" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="1. 原始信号与特征计算" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F8FAFC;strokeColor=#64748B;fontColor=#334155;fontStyle=1;fontSize=17;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
+                    <mxGeometry x="35" y="120" width="575" height="870" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="2. 三分支特征编码" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#EFF6FF;strokeColor=#2563EB;fontColor=#1E40AF;fontStyle=1;fontSize=17;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
+                    <mxGeometry x="650" y="120" width="480" height="870" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="3. 共享 MLP：128 - 128 - 64" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F5F3FF;strokeColor=#7C3AED;fontColor=#5B21B6;fontStyle=1;fontSize=17;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
+                    <mxGeometry x="1170" y="120" width="420" height="870" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="4. 双输出头与控制分配" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFF7ED;strokeColor=#EA580C;fontColor=#9A3412;fontStyle=1;fontSize=17;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
+                    <mxGeometry x="1630" y="120" width="735" height="870" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="上游参考轨迹&#xa;P_ref = {(x_i, y_i)}&#xa;kappa, a_ref, v_ref, s_ref" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="75" y="190" width="230" height="105" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="车辆状态&#xa;pose, s&#xa;vx, vy, ax, ay, r" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="345" y="190" width="220" height="105" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="轨迹预处理&#xa;P_body = R(-psi)(P_ref - P_ego)&#xa;按预瞄距离采样 5 点" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#BFDBFE;strokeColor=#1D4ED8;fontColor=#1E3A8A;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="75" y="345" width="230" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="误差计算&#xa;e_lat = -n_ref^T (p_ego - p_ref)&#xa;e_v = v_ref - vx&#xa;e_s = s_ref - s" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="345" y="345" width="220" height="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="22维特征向量 x&#xa;[x1,y1,...,x5,y5, kappa,&#xa;e_lat,e_v,e_s,a_ref,v_ref,s_ref,&#xa;vx,vy,ax,ay,r]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#C7D2FE;strokeColor=#4F46E5;fontColor=#312E81;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="155" y="525" width="330" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="输入校验&#xa;有限值 / 时间戳 / 物理范围&#xa;无效输入 -&gt; 传统控制器降级" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FDE68A;strokeColor=#D97706;fontColor=#78350F;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="75" y="715" width="230" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="归一化与裁剪&#xa;x_hat_j = clip((x_j - mu_j)/(sigma_j + eps), -5, 5)" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="345" y="715" width="220" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="特征切片&#xa;x_traj = x_hat[0:10]&#xa;x_ref = x_hat[10:17]&#xa;x_state = x_hat[17:22]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E0E7FF;strokeColor=#4F46E5;fontColor=#312E81;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="155" y="855" width="330" height="105" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="轨迹分支输入：10维&#xa;(x1,y1)...(x5,y5)" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="190" width="380" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" value="h_t1 = SiLU(LN(W_t1 x_traj + b_t1))&#xa;Linear 10 - 64" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#BFDBFE;strokeColor=#1D4ED8;fontColor=#1E3A8A;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="295" width="380" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" value="h_traj = SiLU(W_t2 h_t1 + b_t2)&#xa;Linear 64 - 64&#xa;输出：64维轨迹编码" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#93C5FD;strokeColor=#1D4ED8;fontColor=#172554;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="405" width="380" height="95" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" value="参考与误差分支输入：7维&#xa;kappa,e_lat,e_v,e_s,a_ref,v_ref,s_ref" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="550" width="380" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" value="h_ref = SiLU(LN(W_ref x_ref + b_ref))&#xa;Linear 7 - 32&#xa;输出：32维参考误差编码" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DDD6FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="660" width="380" height="95" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" value="车辆状态分支输入：5维&#xa;vx,vy,ax,ay,r" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="805" width="380" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="26" value="h_state = SiLU(LN(W_s x_state + b_s))&#xa;Linear 5 - 32&#xa;输出：32维车辆状态编码" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#BBF7D0;strokeColor=#16A34A;fontColor=#14532D;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="900" width="380" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" value="特征融合&#xa;h0 = Concat(h_traj, h_ref, h_state)&#xa;64 + 32 + 32 = 128维" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1215" y="260" width="330" height="105" as="geometry"/>
+                </mxCell>
+                <mxCell id="31" value="隐藏层 1：128维&#xa;h1 = SiLU(LN(W1 h0 + b1))&#xa;Linear 128 - 128" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DDD6FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1215" y="430" width="330" height="105" as="geometry"/>
+                </mxCell>
+                <mxCell id="32" value="隐藏层 2：128维&#xa;h2 = SiLU(W2 h1 + b2)&#xa;Linear 128 - 128" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#C4B5FD;strokeColor=#6D28D9;fontColor=#3B0764;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1215" y="600" width="330" height="105" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" value="隐藏层 3：64维&#xa;h3 = SiLU(W3 h2 + b3)&#xa;Linear 128 - 64" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#A78BFA;strokeColor=#6D28D9;fontColor=#2E1065;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1215" y="770" width="330" height="105" as="geometry"/>
+                </mxCell>
+                <mxCell id="34" value="共享 MLP 主干&#xa;128 - 128 - 64&#xa;激活函数：SiLU" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F3E8FF;strokeColor=#9333EA;fontColor=#581C87;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1215" y="905" width="330" height="65" as="geometry"/>
+                </mxCell>
+                <mxCell id="40" value="转向输出头&#xa;z_delta = W_d2 SiLU(W_d1 h3 + b_d1) + b_d2&#xa;Linear 64 - 32 - 1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FED7AA;strokeColor=#EA580C;fontColor=#7C2D12;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="1680" y="200" width="300" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="41" value="转向输出缩放&#xa;delta_des = delta_max * tanh(z_delta)&#xa;delta_max = 8 rad" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFEDD5;strokeColor=#EA580C;fontColor=#7C2D12;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="2020" y="200" width="295" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="42" value="纵向输出头&#xa;z_a = W_a2 SiLU(W_a1 h3 + b_a1) + b_a2&#xa;Linear 64 - 32 - 1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FED7AA;strokeColor=#EA580C;fontColor=#7C2D12;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="1680" y="410" width="300" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="43" value="纵向输出缩放&#xa;a_des = a_scale * tanh(z_a)&#xa;a_scale = 6 m/s2" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFEDD5;strokeColor=#EA580C;fontColor=#7C2D12;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="2020" y="410" width="295" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="44" value="纵向控制分配&#xa;if a_des &gt; deadband: T_drive = f_T(a_des, vx)&#xa;if a_des &lt; -deadband: a_brake = -a_des&#xa;T_drive * a_brake = 0" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="1825" y="625" width="390" height="135" as="geometry"/>
+                </mxCell>
+                <mxCell id="45" value="执行器约束与安全监督&#xa;幅值限制 + 变化率限制 + jerk限制&#xa;e_lat / ay / r / 车速边界&#xa;异常时切换传统控制器" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FDE68A;strokeColor=#D97706;fontColor=#78350F;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="1825" y="815" width="390" height="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="46" value="最终车辆控制指令&#xa;方向盘转角 delta_cmd&#xa;驱动扭矩 T_drive_cmd&#xa;制动减速度 a_brake_cmd" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#BBF7D0;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1825" y="965" width="390" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="50" value="关键训练目标" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F3F4F6;strokeColor=#6B7280;fontColor=#374151;fontStyle=1;fontSize=16;verticalAlign=top;spacingTop=8;" parent="1" vertex="1">
+                    <mxGeometry x="35" y="1070" width="2330" height="230" as="geometry"/>
+                </mxCell>
+                <mxCell id="51" value="监督控制损失&#xa;L_control = w_delta * Huber(delta, delta*)&#xa;          + w_a * Huber(a_des, a_des*)" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E5E7EB;strokeColor=#6B7280;fontColor=#1F2937;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="90" y="1120" width="500" height="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="52" value="控制平滑损失&#xa;L_smooth = w_d * ||delta_k-delta_(k-1)||^2&#xa;          + w_a * ||a_k-a_(k-1)||^2" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E5E7EB;strokeColor=#6B7280;fontColor=#1F2937;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="650" y="1120" width="500" height="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="53" value="闭环跟踪损失&#xa;L_closed = Sum[q_lat*e_lat^2 + q_v*e_v^2 + q_s*e_s^2&#xa;             + q_r*(r-vx*kappa)^2 + q_u*||Delta u||^2]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E5E7EB;strokeColor=#6B7280;fontColor=#1F2937;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1210" y="1120" width="530" height="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="54" value="总损失与数据策略&#xa;L = L_control + lambda_s*L_smooth + lambda_c*L_closed&#xa;按 kappa、vx、|e_lat|、纵向控制强度分层采样" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E5E7EB;strokeColor=#6B7280;fontColor=#1F2937;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="1800" y="1120" width="500" height="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="100" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=2;" parent="1" source="10" target="12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="101" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=2;" parent="1" source="10" target="13" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="320" y="243"/>
+                            <mxPoint x="320" y="408"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="102" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#16A34A;strokeWidth=2;" parent="1" source="11" target="12" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="455" y="310"/>
+                            <mxPoint x="240" y="310"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="103" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#16A34A;strokeWidth=2;" parent="1" source="11" target="13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="104" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#4F46E5;strokeWidth=2;" parent="1" source="12" target="14" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="190" y="500"/>
+                            <mxPoint x="320" y="500"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="105" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#4F46E5;strokeWidth=2;" parent="1" source="13" target="14" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="455" y="498"/>
+                            <mxPoint x="340" y="498"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="106" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#D97706;strokeWidth=2;" parent="1" source="14" target="15" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="107" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#D97706;strokeWidth=2;" parent="1" source="15" target="16" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="108" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#4F46E5;strokeWidth=2;" parent="1" source="16" target="17" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="109" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=2;" parent="1" source="17" target="20" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="630" y="908"/>
+                            <mxPoint x="630" y="228"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="110" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=2;" parent="1" source="17" target="23" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="630" y="908"/>
+                            <mxPoint x="630" y="590"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="111" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#16A34A;strokeWidth=2;" parent="1" source="17" target="25" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="630" y="908"/>
+                            <mxPoint x="630" y="843"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="112" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=2;" parent="1" source="20" target="21" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="113" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=2;" parent="1" source="21" target="22" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="114" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=2;" parent="1" source="23" target="24" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="115" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#16A34A;strokeWidth=2;" parent="1" source="25" target="26" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="116" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2563EB;strokeWidth=2;" parent="1" source="22" target="30" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1140" y="452"/>
+                            <mxPoint x="1140" y="290"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="117" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=2;" parent="1" source="24" target="30" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1150" y="708"/>
+                            <mxPoint x="1150" y="313"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="118" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#16A34A;strokeWidth=2;" parent="1" source="26" target="30" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1160" y="938"/>
+                            <mxPoint x="1160" y="340"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="119" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=2;" parent="1" source="30" target="31" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="120" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=2;" parent="1" source="31" target="32" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="121" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=2;" parent="1" source="32" target="33" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="122" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#EA580C;strokeWidth=2;" parent="1" source="33" target="40" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1610" y="823"/>
+                            <mxPoint x="1610" y="255"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="123" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#EA580C;strokeWidth=2;" parent="1" source="33" target="42" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1610" y="823"/>
+                            <mxPoint x="1610" y="465"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="124" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#EA580C;strokeWidth=2;" parent="1" source="40" target="41" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="125" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#EA580C;strokeWidth=2;" parent="1" source="42" target="43" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="126" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#D97706;strokeWidth=2;" parent="1" source="43" target="44" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="127" value="delta_des" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#D97706;strokeWidth=2;fontColor=#92400E;" parent="1" source="41" target="45" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="2350" y="255"/>
+                            <mxPoint x="2350" y="877"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="128" value="T_drive / a_brake" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#D97706;strokeWidth=2;fontColor=#92400E;" parent="1" source="44" target="45" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="129" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#16A34A;strokeWidth=3;" parent="1" source="45" target="46" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
