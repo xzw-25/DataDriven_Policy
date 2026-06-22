@@ -1,0 +1,19 @@
+output_path: data/processed/simulated_controller_dataset.npz
+repetitions: 4
+randomize_initial_state: true
+seed: 42
+time_step_s: 0.02
+maximum_lateral_offset_m: 2.0
+lateral_offset_samples_m:
+  - 0.1
+  - 0.2
+  - 0.5
+
+expert_controller:
+  preview_base_m: 5.0
+  preview_time_s: 0.6
+  heading_kp: 1.8
+  lateral_kp: 1.2
+  maximum_accel_mps2: 4.0
+  maximum_decel_mps2: 6.0
+  maximum_accel_rate_mps3: 8.0

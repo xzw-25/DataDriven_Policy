@@ -11,6 +11,30 @@ from vehicle_controller.types import TrajectoryPoint
 
 
 DEFAULT_LOOKAHEAD_DISTANCES_M = (2.0, 5.0, 10.0, 15.0, 20.0)
+DEFAULT_PREVIEW_TIMES_S = (0.1, 0.2, 0.3, 0.4, 0.5)
+
+
+def preview_distances_from_times(
+    preview_times_s: Sequence[float] = DEFAULT_PREVIEW_TIMES_S,
+    speed_mps: float = 0.0,
+    acceleration_mps2: float = 0.0,
+) -> tuple[float, ...]:
+    """Convert preview time horizons into non-negative arc-length offsets."""
+    if len(preview_times_s) != 5:
+        raise ValueError("Exactly five preview times are required")
+    if any(time_s < 0.0 for time_s in preview_times_s):
+        raise ValueError("Preview times must be non-negative")
+
+    speed = max(float(speed_mps), 0.0)
+    acceleration = float(acceleration_mps2)
+    distances = np.asarray(
+        [
+            max(speed * float(time_s) + 0.5 * acceleration * float(time_s) ** 2, 0.0)
+            for time_s in preview_times_s
+        ],
+        dtype=np.float64,
+    )
+    return tuple(float(value) for value in np.maximum.accumulate(distances))
 
 
 def _arc_lengths(points: Sequence[TrajectoryPoint]) -> np.ndarray:
@@ -65,3 +89,19 @@ def sample_trajectory(
     if arc_lengths[-1] <= 1e-9:
         raise ValueError("Trajectory length must be positive")
     return [_interpolate(points, arc_lengths, distance) for distance in lookahead_distances_m]
+
+
+def sample_trajectory_by_preview_time(
+    points: Sequence[TrajectoryPoint],
+    preview_times_s: Sequence[float] = DEFAULT_PREVIEW_TIMES_S,
+    speed_mps: float = 0.0,
+    acceleration_mps2: float = 0.0,
+) -> list[TrajectoryPoint]:
+    return sample_trajectory(
+        points,
+        preview_distances_from_times(
+            preview_times_s,
+            speed_mps=speed_mps,
+            acceleration_mps2=acceleration_mps2,
+        ),
+    )

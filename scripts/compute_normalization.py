@@ -18,7 +18,9 @@ def main() -> None:
     parser.add_argument("dataset_npz")
     parser.add_argument("output_json")
     args = parser.parse_args()
-    features = np.load(args.dataset_npz)["features"].astype(np.float64)
+    dataset = np.load(args.dataset_npz)
+    feature_key = "raw_features" if "raw_features" in dataset else "features"
+    features = dataset[feature_key].astype(np.float64)
     output = {
         "version": "features_v003",
         "feature_names": FEATURE_NAMES,

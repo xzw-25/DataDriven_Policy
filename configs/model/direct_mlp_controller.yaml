@@ -1,4 +1,4 @@
 type: direct_mlp
 hidden_sizes: [128, 128, 64]
-steering_limit_rad: 8.0
+steering_limit_deg: 458.3662361046586
 accel_limit_mps2: 6.0

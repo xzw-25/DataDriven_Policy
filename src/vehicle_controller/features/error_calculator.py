@@ -10,7 +10,12 @@ import numpy as np
 from vehicle_controller.types import TrackingErrors, TrajectoryPoint, VehicleState
 
 
-def _nearest_index(points: Sequence[TrajectoryPoint], state: VehicleState) -> int:
+def nearest_trajectory_index(
+    points: Sequence[TrajectoryPoint],
+    state: VehicleState,
+) -> int:
+    if not points:
+        raise ValueError("At least one reference point is required")
     distances = [(point.x - state.pose.x) ** 2 + (point.y - state.pose.y) ** 2 for point in points]
     return int(np.argmin(distances))
 
@@ -23,7 +28,7 @@ def calculate_tracking_errors(
 ) -> TrackingErrors:
     if len(points) < 2:
         raise ValueError("At least two reference points are required")
-    index = _nearest_index(points, state)
+    index = nearest_trajectory_index(points, state)
     previous = points[max(0, index - 1)]
     following = points[min(len(points) - 1, index + 1)]
     path_yaw = math.atan2(following.y - previous.y, following.x - previous.x)

@@ -261,7 +261,7 @@ data_driven_Proxy_Model/
 
 ### `configs/data/`
 
-- `dataset.yaml`：数据路径、字段映射、采样周期、5 个轨迹点预瞄距离和数据划分；
+- `dataset.yaml`：数据路径、字段映射、采样周期、5 个轨迹点预瞄时间和数据划分；
 - `normalization.yaml`：22 维输入顺序、均值、标准差、裁剪范围及版本号。
 
 ### `configs/model/`
@@ -331,7 +331,7 @@ FEATURE_NAMES = (
 
 #### `trajectory_sampler.py`
 
-根据固定或车速相关的预瞄距离，从上游轨迹插值得到 5 个有稳定物理语义的轨迹点。
+根据 `0.1s~0.5s` 预瞄时间和参考速度规划换算的弧长偏移，从上游轨迹插值得到 5 个有稳定物理语义的轨迹点。
 
 #### `curvature.py`
 
@@ -605,7 +605,7 @@ python scripts/export_model.py --checkpoint artifacts/checkpoints/beseline.pt \
 验证单模块确定性行为，重点覆盖：
 
 - 坐标转换符号；
-- 固定预瞄距离插值；
+- 基于预瞄时间的轨迹点插值；
 - 曲率左右转符号；
 - 22 维特征顺序；
 - 归一化与裁剪；
@@ -687,7 +687,7 @@ signed_accel_normalized: [-1, 1]
 经过输出缩放后：
 
 ```text
-steering_des: rad
+steering_des: deg
 signed_accel_des: m/s^2
 ```
 
@@ -700,6 +700,8 @@ brake_decel_cmd: m/s^2, >= 0
 source: neural | limited_neural | fallback
 reason: safety decision code
 ```
+
+神经网络控制器的方向盘物理输出使用 deg；最终车辆指令、执行器限幅和动力学模型仍使用 rad，由控制 pipeline 做单位转换。
 
 任何时刻必须满足：
 

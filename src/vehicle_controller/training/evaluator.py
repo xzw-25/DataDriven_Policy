@@ -9,8 +9,13 @@ from torch.utils.data import DataLoader
 from vehicle_controller.training.metrics import controller_metrics
 
 
-def evaluate(model: nn.Module, loader: DataLoader, device: str = "cpu") -> dict[str, float]:
+def predict(
+    model: nn.Module,
+    loader: DataLoader,
+    device: str = "cpu",
+) -> tuple[torch.Tensor, torch.Tensor]:
     model.eval()
+    model.to(device)
     predictions = []
     targets = []
     with torch.inference_mode():
@@ -19,5 +24,9 @@ def evaluate(model: nn.Module, loader: DataLoader, device: str = "cpu") -> dict[
             targets.append(batch_targets)
     if not predictions:
         raise ValueError("Cannot evaluate an empty data loader")
-    return controller_metrics(torch.cat(predictions), torch.cat(targets))
+    return torch.cat(predictions), torch.cat(targets)
 
+
+def evaluate(model: nn.Module, loader: DataLoader, device: str = "cpu") -> dict[str, float]:
+    predictions, targets = predict(model, loader, device=device)
+    return controller_metrics(predictions, targets)

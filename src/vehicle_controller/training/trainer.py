@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 class EpochResult:
     loss: float
     sample_count: int
+    batch_losses: tuple[float, ...]
 
 
 class Trainer:
@@ -34,17 +35,19 @@ class Trainer:
         self.model.train()
         total_loss = 0.0
         sample_count = 0
+        batch_losses: list[float] = []
         for features, targets in loader:
             features = features.to(self.device)
             targets = targets.to(self.device)
             self.optimizer.zero_grad(set_to_none=True)
             prediction = self.model(features)
             loss = self.loss_function(prediction, targets)
+            loss_value = float(loss.item())
             loss.backward()
             nn.utils.clip_grad_norm_(self.model.parameters(), self.gradient_clip_norm)
             self.optimizer.step()
             batch_size = features.shape[0]
-            total_loss += float(loss.item()) * batch_size
+            total_loss += loss_value * batch_size
             sample_count += batch_size
-        return EpochResult(total_loss / max(sample_count, 1), sample_count)
-
+            batch_losses.append(loss_value)
+        return EpochResult(total_loss / max(sample_count, 1), sample_count, tuple(batch_losses))

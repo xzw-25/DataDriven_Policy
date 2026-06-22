@@ -39,4 +39,4 @@ class FallbackController:
         steering_wheel_angle = front_wheel_angle * self.vehicle.steering_ratio
         signed_accel = a_ref + self.speed_kp * errors.e_v
         signed_accel = min(max(signed_accel, -self.maximum_decel_mps2), self.maximum_accel_mps2)
-        return NeuralPolicyOutput(steering_wheel_angle, signed_accel)
+        return NeuralPolicyOutput.from_rad(steering_wheel_angle, signed_accel)

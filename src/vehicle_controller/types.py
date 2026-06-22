@@ -9,6 +9,7 @@ from typing import Sequence
 import numpy as np
 
 from vehicle_controller.constants import FEATURE_COUNT
+from vehicle_controller.units import deg_to_rad, rad_to_deg
 
 
 @dataclass(frozen=True)
@@ -69,8 +70,20 @@ class ControllerFeatures:
 
 @dataclass(frozen=True)
 class NeuralPolicyOutput:
-    steering_des_rad: float
+    steering_des_deg: float
     signed_accel_des_mps2: float
+
+    @classmethod
+    def from_rad(
+        cls,
+        steering_des_rad: float,
+        signed_accel_des_mps2: float,
+    ) -> NeuralPolicyOutput:
+        return cls(rad_to_deg(steering_des_rad), signed_accel_des_mps2)
+
+    @property
+    def steering_des_rad(self) -> float:
+        return deg_to_rad(self.steering_des_deg)
 
 
 @dataclass(frozen=True)

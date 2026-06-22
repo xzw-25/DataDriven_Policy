@@ -15,13 +15,13 @@ class NeuralPolicy:
         self,
         model: nn.Module,
         normalizer: FeatureNormalizer,
-        steering_limit_rad: float,
+        steering_limit_deg: float,
         accel_limit_mps2: float,
         device: str = "cpu",
     ) -> None:
         self.model = model.to(device).eval()
         self.normalizer = normalizer
-        self.steering_limit_rad = steering_limit_rad
+        self.steering_limit_deg = steering_limit_deg
         self.accel_limit_mps2 = accel_limit_mps2
         self.device = torch.device(device)
 
@@ -31,7 +31,6 @@ class NeuralPolicy:
         with torch.inference_mode():
             output = self.model(tensor.to(self.device)).cpu().numpy()[0]
         return NeuralPolicyOutput(
-            steering_des_rad=float(output[0] * self.steering_limit_rad),
+            steering_des_deg=float(output[0] * self.steering_limit_deg),
             signed_accel_des_mps2=float(output[1] * self.accel_limit_mps2),
         )
-

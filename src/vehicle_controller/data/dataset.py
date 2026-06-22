@@ -26,11 +26,19 @@ class ControllerDataset(Dataset[tuple[Tensor, Tensor]]):
     @classmethod
     def from_npz(cls, path: str | Path) -> "ControllerDataset":
         data = np.load(path)
-        return cls(data["features"], data["targets"])
+        features = data["features"]
+        targets = data["targets"]
+        if "target_valid_mask" in data:
+            mask = np.asarray(data["target_valid_mask"], dtype=bool)
+            if mask.shape != (features.shape[0],):
+                raise ValueError("target_valid_mask must have shape [N]")
+            features = features[mask]
+            targets = targets[mask]
+        print(f"Number of features: {features.shape[0]}")
+        return cls(features, targets)
 
     def __len__(self) -> int:
         return self.features.shape[0]
 
     def __getitem__(self, index: int) -> tuple[Tensor, Tensor]:
         return self.features[index], self.targets[index]
-

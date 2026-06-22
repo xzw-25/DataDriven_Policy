@@ -9,12 +9,19 @@ from vehicle_controller.control.fallback_controller import FallbackController
 from vehicle_controller.control.longitudinal_allocator import LongitudinalAllocator
 from vehicle_controller.control.neural_policy import NeuralPolicy
 from vehicle_controller.control.safety_supervisor import SafetySupervisor
-from vehicle_controller.features.error_calculator import calculate_tracking_errors
+from vehicle_controller.features.error_calculator import (
+    calculate_tracking_errors,
+    nearest_trajectory_index,
+)
 from vehicle_controller.features.feature_builder import FeatureBuilder
 from vehicle_controller.features.validator import FeatureValidator
 from vehicle_controller.geometry.coordinate_transform import global_to_body
 from vehicle_controller.geometry.curvature import resolve_reference_curvature
-from vehicle_controller.geometry.trajectory_sampler import sample_trajectory
+from vehicle_controller.geometry.trajectory_sampler import (
+    DEFAULT_PREVIEW_TIMES_S,
+    preview_distances_from_times,
+    sample_trajectory,
+)
 from vehicle_controller.types import (
     CommandSource,
     ControllerStepDiagnostics,
@@ -35,7 +42,8 @@ class ControllerPipeline:
         fallback_controller: FallbackController,
         safety_supervisor: SafetySupervisor,
         feature_validator: FeatureValidator | None = None,
-        lookahead_distances_m: Sequence[float] = (2.0, 5.0, 10.0, 15.0, 20.0),
+        preview_times_s: Sequence[float] = DEFAULT_PREVIEW_TIMES_S,
+        lookahead_distances_m: Sequence[float] | None = None,
         curvature_weights: Sequence[float] = (1.0, 0.8, 0.6, 0.4, 0.2),
     ) -> None:
         self.neural_policy = neural_policy
@@ -44,11 +52,20 @@ class ControllerPipeline:
         self.fallback_controller = fallback_controller
         self.safety_supervisor = safety_supervisor
         self.feature_validator = feature_validator or FeatureValidator()
-        self.lookahead_distances_m = lookahead_distances_m
+        self.preview_times_s = tuple(float(value) for value in preview_times_s)
+        self.fixed_lookahead_distances_m = (
+            None
+            if lookahead_distances_m is None
+            else tuple(float(value) for value in lookahead_distances_m)
+        )
         self.curvature_weights = curvature_weights
         self.feature_builder = FeatureBuilder()
         self.previous_command = VehicleCommand()
         self.last_diagnostics: ControllerStepDiagnostics | None = None
+
+    def reset(self) -> None:
+        self.previous_command = VehicleCommand()
+        self.last_diagnostics = None
 
     def _to_command(
         self,
@@ -80,8 +97,17 @@ class ControllerPipeline:
             state,
         )
         self.last_diagnostics = None
-        body_points = global_to_body(reference.points, state.pose)
-        sampled_points = sample_trajectory(body_points, self.lookahead_distances_m)
+        nearest_index = nearest_trajectory_index(reference.points, state)
+        path_start = min(nearest_index, len(reference.points) - 2)
+        body_points = global_to_body(reference.points[path_start:], state.pose)
+        lookahead_distances_m = self.fixed_lookahead_distances_m
+        if lookahead_distances_m is None:
+            lookahead_distances_m = preview_distances_from_times(
+                self.preview_times_s,
+                speed_mps=reference.v_ref,
+                acceleration_mps2=reference.a_ref,
+            )
+        sampled_points = sample_trajectory(body_points, lookahead_distances_m)
         kappa = resolve_reference_curvature(
             sampled_points,
             reference.kappa,

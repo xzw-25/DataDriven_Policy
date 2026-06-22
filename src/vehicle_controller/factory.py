@@ -13,6 +13,7 @@ from vehicle_controller.control.longitudinal_allocator import LongitudinalAlloca
 from vehicle_controller.control.neural_policy import NeuralPolicy
 from vehicle_controller.control.safety_supervisor import SafetyLimits, SafetySupervisor
 from vehicle_controller.features.normalizer import FeatureNormalizer
+from vehicle_controller.units import steering_limit_deg_from_config
 from vehicle_controller.features.validator import FeatureValidator
 from vehicle_controller.utils.config import load_yaml
 from vehicle_controller.vehicle.parameter_loader import ActuatorLimits, VehicleParameters
@@ -51,7 +52,7 @@ def build_baseline_pipeline(
         neural_policy=NeuralPolicy(
             model=model,
             normalizer=normalizer,
-            steering_limit_rad=float(model_config["steering_limit_rad"]),
+            steering_limit_deg=steering_limit_deg_from_config(model_config),
             accel_limit_mps2=float(model_config["accel_limit_mps2"]),
             device=device,
         ),
@@ -62,6 +63,7 @@ def build_baseline_pipeline(
         feature_validator=FeatureValidator(
             float(safety_config["input_abs_normalized_max"])
         ),
-        lookahead_distances_m=dataset_config["lookahead_distances_m"],
+        preview_times_s=dataset_config.get("preview_times_s", (0.1, 0.2, 0.3, 0.4, 0.5)),
+        lookahead_distances_m=dataset_config.get("lookahead_distances_m"),
         curvature_weights=dataset_config["curvature_weights"],
     )

@@ -28,7 +28,7 @@
                 <mxCell id="11" value="车辆状态&#xa;pose, s&#xa;vx, vy, ax, ay, r" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;fontSize=13;" parent="1" vertex="1">
                     <mxGeometry x="345" y="190" width="220" height="105" as="geometry"/>
                 </mxCell>
-                <mxCell id="12" value="轨迹预处理&#xa;P_body = R(-psi)(P_ref - P_ego)&#xa;按预瞄距离采样 5 点" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#BFDBFE;strokeColor=#1D4ED8;fontColor=#1E3A8A;fontSize=13;" parent="1" vertex="1">
+                <mxCell id="12" value="轨迹预处理&#xa;P_body = R(-psi)(P_ref - P_ego)&#xa;按0.1~0.5s预瞄时间采样 5 点" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#BFDBFE;strokeColor=#1D4ED8;fontColor=#1E3A8A;fontSize=13;" parent="1" vertex="1">
                     <mxGeometry x="75" y="345" width="230" height="110" as="geometry"/>
                 </mxCell>
                 <mxCell id="13" value="误差计算&#xa;e_lat = -n_ref^T (p_ego - p_ref)&#xa;e_v = v_ref - vx&#xa;e_s = s_ref - s" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=13;" parent="1" vertex="1">
@@ -85,7 +85,7 @@
                 <mxCell id="40" value="转向输出头&#xa;z_delta = W_d2 SiLU(W_d1 h3 + b_d1) + b_d2&#xa;Linear 64 - 32 - 1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FED7AA;strokeColor=#EA580C;fontColor=#7C2D12;fontStyle=1;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="1680" y="200" width="300" height="110" as="geometry"/>
                 </mxCell>
-                <mxCell id="41" value="转向输出缩放&#xa;delta_des = delta_max * tanh(z_delta)&#xa;delta_max = 8 rad" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFEDD5;strokeColor=#EA580C;fontColor=#7C2D12;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                <mxCell id="41" value="转向输出缩放&#xa;delta_des = delta_max * tanh(z_delta)&#xa;delta_max = 458.37 deg" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFEDD5;strokeColor=#EA580C;fontColor=#7C2D12;fontStyle=1;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="2020" y="200" width="295" height="110" as="geometry"/>
                 </mxCell>
                 <mxCell id="42" value="纵向输出头&#xa;z_a = W_a2 SiLU(W_a1 h3 + b_a1) + b_a2&#xa;Linear 64 - 32 - 1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FED7AA;strokeColor=#EA580C;fontColor=#7C2D12;fontStyle=1;fontSize=12;" parent="1" vertex="1">

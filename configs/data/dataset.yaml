@@ -2,10 +2,9 @@ raw_dir: data/raw
 processed_dir: data/processed
 split_dir: data/splits
 sample_period_s: 0.01
-lookahead_distances_m: [2.0, 5.0, 10.0, 15.0, 20.0]
+preview_times_s: [0.1, 0.2, 0.3, 0.4, 0.5]
 curvature_mode: lookahead_weighted_mean
 curvature_weights: [1.0, 0.8, 0.6, 0.4, 0.2]
 train_ratio: 0.7
 validation_ratio: 0.15
 test_ratio: 0.15
-

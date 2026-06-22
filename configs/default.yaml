@@ -5,8 +5,9 @@ control_period_s: 0.01
 data:
   config: configs/data/dataset.yaml
   normalization: configs/data/normalization.yaml
+  generation: configs/data/simulation_generation.yaml
 model:
-  config: configs/model/mlp_controller.yaml
+  config: configs/model/direct_mlp_controller.yaml
 training:
   config: configs/training/imitation.yaml
 vehicle:
@@ -15,4 +16,3 @@ vehicle:
 deployment:
   runtime: configs/deployment/runtime.yaml
   safety_limits: configs/deployment/safety_limits.yaml
-
