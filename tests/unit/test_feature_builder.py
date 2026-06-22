@@ -10,7 +10,7 @@ from vehicle_controller.types import (
 )
 
 
-def test_feature_builder_uses_fixed_22_value_order() -> None:
+def test_feature_builder_uses_fixed_21_value_order() -> None:
     points = [TrajectoryPoint(float(index), float(-index)) for index in range(1, 6)]
     state = VehicleState(Pose2D(0.0, 0.0, 0.0), 6.0, 0.2, 0.3, 0.4, 0.5)
     values = FeatureBuilder().build(
@@ -33,7 +33,6 @@ def test_feature_builder_uses_fixed_22_value_order() -> None:
         7.0,
         12.0,
         6.0,
-        0.2,
         0.3,
         0.4,
         0.5,

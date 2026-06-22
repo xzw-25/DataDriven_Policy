@@ -2,7 +2,7 @@
 
 ## 1. 工程目标
 
-本工程实现从数据准备、监督训练、闭环验证到在线控制部署的完整链路。基础控制器采用 22 维输入：
+本工程实现从数据准备、监督训练、闭环验证到在线控制部署的完整链路。基础控制器采用 21 维输入：
 
 \[
 \mathbf{x} =
@@ -262,12 +262,12 @@ data_driven_Proxy_Model/
 ### `configs/data/`
 
 - `dataset.yaml`：数据路径、字段映射、采样周期、5 个轨迹点预瞄时间和数据划分；
-- `normalization.yaml`：22 维输入顺序、均值、标准差、裁剪范围及版本号。
+- `normalization.yaml`：21 维输入顺序、均值、标准差、裁剪范围及版本号。
 
 ### `configs/model/`
 
 - `mlp_controller.yaml`：三分支 MLP 的层宽、激活函数、输出缩放；
-- `direct_mlp_controller.yaml`：22维输入直连 MLP，隐藏层为 `128→128→64`；
+- `direct_mlp_controller.yaml`：21维输入直连 MLP，隐藏层为 `128→128→64`；
 - `gru_controller.yaml`：时序长度、GRU 隐藏维度和输出头配置。
 
 MLP 是第一阶段基线，GRU 作为后续时序增强模型。
@@ -311,13 +311,13 @@ MLP 是第一阶段基线，GRU 作为后续时序增强模型。
 
 #### `constants.py`
 
-定义稳定不变的常量，例如 22 维输入特征名称和顺序：
+定义稳定不变的常量，例如 21 维输入特征名称和顺序：
 
 ```python
 FEATURE_NAMES = (
     "x1", "y1", "x2", "y2", "x3", "y3", "x4", "y4", "x5", "y5",
     "kappa", "e_lat", "e_v", "e_s", "a_ref", "v_ref", "s_ref",
-    "vx", "vy", "ax", "ay", "r",
+    "vx", "ax", "ay", "r",
 )
 ```
 
@@ -346,7 +346,7 @@ FEATURE_NAMES = (
 
 #### `feature_builder.py`
 
-按照固定顺序组装 22 维输入。该模块是在线推理和训练数据预处理的共同入口。
+按照固定顺序组装 21 维输入。该模块是在线推理和训练数据预处理的共同入口。
 
 #### `normalizer.py`
 
@@ -367,7 +367,7 @@ FEATURE_NAMES = (
 加载单帧样本，为 MLP 监督训练返回：
 
 ```text
-features[22], steering_target[1], signed_accel_target[1]
+features[21], steering_target[1], signed_accel_target[1]
 ```
 
 #### `sequence_dataset.py`
@@ -377,7 +377,7 @@ features[22], steering_target[1], signed_accel_target[1]
 #### `augmentation.py`
 
 实现轨迹噪声、状态噪声、延迟和左右镜像。镜像操作同步反转 `y_i`、
-`kappa`、`e_lat`、`vy`、`ay`、`r` 和转向标签，`e_v` 不反转。
+`kappa`、`e_lat`、`ay`、`r` 和转向标签，`e_v` 不反转。
 
 #### `sampler.py`
 
@@ -410,14 +410,14 @@ features[22], steering_target[1], signed_accel_target[1]
 实现不带输入编码分支的纯 MLP：
 
 ```text
-22维归一化输入 -> 128 -> 128 -> 64 -> 2维归一化输出
+21维归一化输入 -> 128 -> 128 -> 64 -> 2维归一化输出
 ```
 
 三个隐藏层使用 `SiLU`，第一层后使用 `LayerNorm`，最终输出使用 `tanh`。
 
 #### `gru_controller.py`
 
-实现可选的时序增强模型，输入最近若干帧的 22 维特征。
+实现可选的时序增强模型，输入最近若干帧的 21 维特征。
 
 #### `heads.py`
 
@@ -501,7 +501,7 @@ features[22], steering_target[1], signed_accel_target[1]
 ```text
 轨迹预处理
   -> 误差计算
-  -> 22维特征构建
+  -> 21维特征构建
   -> 输入校验与归一化
   -> 神经网络推理
   -> 纵向控制分配
@@ -577,7 +577,7 @@ features[22], steering_target[1], signed_accel_target[1]
 | 脚本 | 作用 |
 |---|---|
 | `prepare_dataset.py` | 原始日志转标准训练数据 |
-| `compute_normalization.py` | 仅用训练集统计 22 维均值和标准差 |
+| `compute_normalization.py` | 仅用训练集统计 21 维均值和标准差 |
 | `train_imitation.py` | 运行监督模仿训练 |
 | `train_closed_loop.py` | 运行闭环滚动训练 |
 | `evaluate_offline.py` | 输出离线拟合指标和分桶结果 |
@@ -607,7 +607,7 @@ python scripts/export_model.py --checkpoint artifacts/checkpoints/beseline.pt \
 - 坐标转换符号；
 - 基于预瞄时间的轨迹点插值；
 - 曲率左右转符号；
-- 22 维特征顺序；
+- 21 维特征顺序；
 - 归一化与裁剪；
 - 网络输入输出维度；
 - 驱动制动互斥；
@@ -666,15 +666,15 @@ python scripts/export_model.py --checkpoint artifacts/checkpoints/beseline.pt \
 网络输入形状：
 
 ```text
-MLP: [batch_size, 22]
-GRU: [batch_size, sequence_length, 22]
+MLP: [batch_size, 21]
+GRU: [batch_size, sequence_length, 21]
 ```
 
 固定输入顺序：
 
 ```text
 x1, y1, x2, y2, x3, y3, x4, y4, x5, y5,
-kappa, e_lat, e_v, e_s, a_ref, v_ref, s_ref, vx, vy, ax, ay, r
+kappa, e_lat, e_v, e_s, a_ref, v_ref, s_ref, vx, ax, ay, r
 ```
 
 ### 10.2 网络原始输出
@@ -730,12 +730,12 @@ exported_models/controller_v003/
 ```json
 {
   "model_version": "controller_v003",
-  "feature_version": "features_v003",
-  "feature_count": 22,
+  "feature_version": "features_v004",
+  "feature_count": 21,
   "feature_names": [
     "x1", "y1", "x2", "y2", "x3", "y3", "x4", "y4", "x5", "y5",
     "kappa", "e_lat", "e_v", "e_s", "a_ref", "v_ref", "s_ref",
-    "vx", "vy", "ax", "ay", "r"
+    "vx", "ax", "ay", "r"
   ],
   "output_names": ["steering_normalized", "signed_accel_normalized"],
   "trajectory_sampling_version": "sampling_v001",
@@ -772,7 +772,7 @@ simulation / deployment / adapters
 
 首个可运行版本不需要一次实现全部规划文件，应优先完成：
 
-1. 公共数据类型与 22 维特征契约；
+1. 公共数据类型与 21 维特征契约；
 2. 坐标转换、轨迹采样、误差计算和归一化；
 3. 原三分支 MLP，并提供无输入编码的 Direct MLP 可选配置；
 4. 数据集加载、监督损失和训练脚本；
@@ -788,7 +788,7 @@ GRU、可微闭环训练、DAgger、ROS 2 和 ONNX Runtime 可在基线闭环稳
 ## 14. 推荐实现顺序
 
 1. 建立 `pyproject.toml`、配置加载和公共类型；
-2. 实现几何与 22 维特征流水线，并完成单元测试；
+2. 实现几何与 21 维特征流水线，并完成单元测试；
 3. 实现数据集、MLP、损失、训练和离线评估；
 4. 实现纵向分配、限幅、安全监督和备份控制器；
 5. 实现车辆模型与软件在环闭环验证；

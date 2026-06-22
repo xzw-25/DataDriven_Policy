@@ -1,4 +1,4 @@
-"""Three-branch MLP controller for the 22-dimensional feature contract."""
+"""Three-branch MLP controller for the 21-dimensional feature contract."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from torch import Tensor, nn
 
 from vehicle_controller.constants import (
     REFERENCE_ERROR_FEATURE_COUNT,
+    STATE_FEATURE_COUNT,
     TRAJECTORY_FEATURE_COUNT,
 )
 from vehicle_controller.models.base import BaseControllerModel, require_feature_shape
@@ -39,9 +40,9 @@ class MLPController(BaseControllerModel):
         error_hidden = error_hidden or [32]
         state_hidden = state_hidden or [32]
         shared_hidden = shared_hidden or [128, 128, 64]
-        self.trajectory_encoder = _branch(10, trajectory_hidden)
-        self.error_encoder = _branch(7, error_hidden)
-        self.state_encoder = _branch(5, state_hidden)
+        self.trajectory_encoder = _branch(TRAJECTORY_FEATURE_COUNT, trajectory_hidden)
+        self.error_encoder = _branch(REFERENCE_ERROR_FEATURE_COUNT, error_hidden)
+        self.state_encoder = _branch(STATE_FEATURE_COUNT, state_hidden)
         encoded_size = trajectory_hidden[-1] + error_hidden[-1] + state_hidden[-1]
         self.shared = _branch(encoded_size, shared_hidden)
         self.steering_head = BoundedOutputHead(shared_hidden[-1], head_hidden)

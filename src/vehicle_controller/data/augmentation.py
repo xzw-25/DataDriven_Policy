@@ -5,7 +5,7 @@ import numpy as np
 from vehicle_controller.constants import FEATURE_COUNT
 
 
-SIGNED_LATERAL_FEATURE_INDICES = (1, 3, 5, 7, 9, 10, 11, 18, 20, 21)
+SIGNED_LATERAL_FEATURE_INDICES = (1, 3, 5, 7, 9, 10, 11, 19, 20)
 
 
 def mirror_left_right(features: np.ndarray, targets: np.ndarray) -> tuple[np.ndarray, np.ndarray]:

@@ -9,7 +9,7 @@ from vehicle_controller.models.base import BaseControllerModel, require_feature_
 
 
 class DirectMLPController(BaseControllerModel):
-    """Map the normalized 22-D feature vector directly to two bounded controls."""
+    """Map the normalized feature vector directly to two bounded controls."""
 
     def __init__(self, hidden_sizes: list[int] | None = None) -> None:
         super().__init__()

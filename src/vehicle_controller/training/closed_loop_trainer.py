@@ -263,7 +263,6 @@ def _controller_features(
             reference.reference_speed[:, step, None],
             reference.reference_s[:, step, None],
             vx[:, None],
-            torch.zeros_like(vx)[:, None],
             ax[:, None],
             ay[:, None],
             yaw_rate[:, None],

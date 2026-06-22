@@ -1,4 +1,4 @@
-"""Build the stable 22-dimensional controller input."""
+"""Build the stable 21-dimensional controller input."""
 
 from __future__ import annotations
 
@@ -43,7 +43,6 @@ class FeatureBuilder:
                 v_ref,
                 s_ref,
                 state.vx,
-                state.vy,
                 state.ax,
                 state.ay,
                 state.r,

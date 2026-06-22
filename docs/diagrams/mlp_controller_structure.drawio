@@ -22,7 +22,7 @@
                 <mxCell id="7" value="双控制输出头" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFF7ED;strokeColor=#EA580C;fontColor=#9A3412;fontStyle=1;fontSize=17;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
                     <mxGeometry x="1310" y="130" width="450" height="750" as="geometry"/>
                 </mxCell>
-                <mxCell id="10" value="归一化特征 x&#xa;形状：[batch, 22]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E0E7FF;strokeColor=#4F46E5;fontColor=#312E81;fontStyle=1;fontSize=15;" parent="1" vertex="1">
+                <mxCell id="10" value="归一化特征 x&#xa;形状：[batch, 21]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E0E7FF;strokeColor=#4F46E5;fontColor=#312E81;fontStyle=1;fontSize=15;" parent="1" vertex="1">
                     <mxGeometry x="90" y="200" width="230" height="80" as="geometry"/>
                 </mxCell>
                 <mxCell id="11" value="轨迹几何 x[0:10]&#xa;5 个局部轨迹点&#xa;10 维" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontSize=14;" parent="1" vertex="1">
@@ -31,7 +31,7 @@
                 <mxCell id="12" value="参考与误差 x[10:17]&#xa;kappa、e_lat、e_v、e_s&#xa;a_ref、v_ref、s_ref | 7 维" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=13;" parent="1" vertex="1">
                     <mxGeometry x="75" y="510" width="230" height="110" as="geometry"/>
                 </mxCell>
-                <mxCell id="13" value="车辆状态 x[17:22]&#xa;vx、vy、ax、ay、r&#xa;5 维" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=14;" parent="1" vertex="1">
+                <mxCell id="13" value="车辆状态 x[17:21]&#xa;vx、ax、ay、r&#xa;5 维" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="75" y="712.5" width="230" height="95" as="geometry"/>
                 </mxCell>
                 <mxCell id="20" value="trajectory_encoder&#xa;Linear 10 -&gt; 64&#xa;LayerNorm(64) -&gt; SiLU&#xa;Linear 64 -&gt; 64 -&gt; SiLU&#xa;输出 64 维" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#BFDBFE;strokeColor=#1D4ED8;fontColor=#172554;fontStyle=1;fontSize=14;" parent="1" vertex="1">
@@ -40,7 +40,7 @@
                 <mxCell id="21" value="error_encoder&#xa;Linear 7 -&gt; 32&#xa;LayerNorm(32) -&gt; SiLU&#xa;输出 32 维" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DDD6FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="435" y="505" width="355" height="120" as="geometry"/>
                 </mxCell>
-                <mxCell id="22" value="state_encoder&#xa;Linear 5 -&gt; 32&#xa;LayerNorm(32) -&gt; SiLU&#xa;输出 32 维" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#BBF7D0;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                <mxCell id="22" value="state_encoder&#xa;Linear 4 -&gt; 32&#xa;LayerNorm(32) -&gt; SiLU&#xa;输出 32 维" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#BBF7D0;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;fontSize=14;" parent="1" vertex="1">
                     <mxGeometry x="435" y="700" width="355" height="120" as="geometry"/>
                 </mxCell>
                 <mxCell id="30" value="Concat&#xa;64 + 32 + 32 = 128 维" style="ellipse;whiteSpace=wrap;html=0;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;fontSize=15;" parent="1" vertex="1">

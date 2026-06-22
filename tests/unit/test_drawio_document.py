@@ -60,7 +60,7 @@ def test_neural_network_architecture_is_a_valid_single_page_drawio() -> None:
         ),
         (
             Path("docs/diagrams/direct_mlp_controller_structure.drawio"),
-            ("DirectMLPController", "Linear 22 -> 128", "Linear 64 -> 2"),
+            ("DirectMLPController", "Linear 21 -> 128", "Linear 64 -> 2"),
         ),
         (
             Path("docs/diagrams/gru_controller_structure.drawio"),

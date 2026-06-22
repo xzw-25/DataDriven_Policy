@@ -22,7 +22,7 @@ def main() -> None:
     feature_key = "raw_features" if "raw_features" in dataset else "features"
     features = dataset[feature_key].astype(np.float64)
     output = {
-        "version": "features_v003",
+        "version": "features_v004",
         "feature_names": FEATURE_NAMES,
         "mean": features.mean(axis=0).tolist(),
         "std": np.maximum(features.std(axis=0), 1e-6).tolist(),

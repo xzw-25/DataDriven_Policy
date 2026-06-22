@@ -2,7 +2,7 @@
 
 本工程实现一个面向车辆轨迹与速度联合控制的神经网络控制器。整体目标是用专家控制器生成监督数据，先进行模仿学习，再基于车辆动力学闭环 rollout 做可微分微调，最后导出 TorchScript / ONNX 模型并在部署运行时中验证。
 
-控制器固定使用 22 维输入特征，神经网络输出归一化的方向盘转角和有符号纵向加速度需求。部署管线会将神经网络输出反归一化，经过限幅、安全检查、纵向驱动/制动分配后生成最终执行指令。
+控制器固定使用 21 维输入特征，神经网络输出归一化的方向盘转角和有符号纵向加速度需求。部署管线会将神经网络输出反归一化，经过限幅、安全检查、纵向驱动/制动分配后生成最终执行指令。
 
 ## 文档索引
 
@@ -46,7 +46,7 @@ baseline checkpoint
 核心运行链路由以下部分组成：
 
 - `data/`：专家控制器、典型场景、数据生成、NPZ 数据集读取。
-- `features/`：坐标系转换后的 22 维特征构建、误差计算、归一化、输入校验。
+- `features/`：坐标系转换后的 21 维特征构建、误差计算、归一化、输入校验。
 - `models/`：MLP、Direct MLP、GRU 控制器模型。
 - `training/`：监督训练、loss、指标、检查点、离线图表、可微分闭环训练。
 - `vehicle/`：运动学自行车模型、执行器参数和车辆参数。
@@ -127,7 +127,7 @@ python3 scripts/extract_task_raw_data.py \
   --record-root data/raw/ai_control_dataset/record_pkl \
   --output data/interim/clean_ad_policy_sim_v1_aba9e399_raw_data.pkl
 
-# 2. 将 reference_traj + pose 构造 22 维 feature，并提取 control_signal 作为 2 维监督 target
+# 2. 将 reference_traj + pose 构造 21 维 feature，并提取 control_signal 作为 2 维监督 target
 python3 scripts/build_features_from_raw_data.py \
   --raw-data data/interim/clean_ad_policy_sim_v1_aba9e399_raw_data.pkl \
   --output data/processed/clean_ad_policy_sim_v1_aba9e399_imitation_dataset.npz
@@ -165,7 +165,7 @@ python3 -m pytest
 ```text
 x1, y1, x2, y2, x3, y3, x4, y4, x5, y5,
 kappa, e_lat, e_v, e_s, a_ref, v_ref, s_ref,
-vx, vy, ax, ay, r
+vx, ax, ay, r
 ```
 构造feature和target使用到的pkl中的信号：
 ```text
@@ -233,7 +233,7 @@ preview_times_s: [0.1, 0.2, 0.3, 0.4, 0.5]
 ```text
 preview_distance = max(v_ref * t + 0.5 * a_ref * t^2, 0)
 ```
-
+TK8GFR6QFE4UD7NTIT1T8I 
 含义：
 
 - `x1..x5, y1..y5`：车辆局部坐标系下的 5 个预瞄参考轨迹点，默认对应 `0.1s, 0.2s, 0.3s, 0.4s, 0.5s`。
@@ -243,7 +243,7 @@ preview_distance = max(v_ref * t + 0.5 * a_ref * t^2, 0)
 - `e_s`：纵向进度误差，使用按当前 `pose.timestamp` 插值得到的纵向参考 `s_ref` 计算，`e_s = s_ref - s_vehicle`。
 - `a_ref`：从自车在参考线上的投影位置向前预瞄 `0.5s` 时，对应参考轨迹点的加速度。
 - `v_ref, s_ref`：当前 pose 绝对时间对应的参考速度、参考纵向位置。纵向时间轴直接使用 `reference_traj.time.timestamp + relative_time`，再根据 `pose.timestamp` 在线性插值得到。
-- `vx, vy, ax, ay, r`：车辆当前状态量。
+- `vx, ax, ay, r`：车辆当前状态量。
 
 神经网络直接输出：
 
@@ -279,7 +279,7 @@ drive_torque_cmd, brake_decel_cmd
 常用配置：
 
 - [configs/data/dataset.yaml](configs/data/dataset.yaml)：数据目录、采样周期、预瞄时间、曲率权重、数据划分比例。
-- [configs/data/normalization.yaml](configs/data/normalization.yaml)：22 维特征归一化参数。
+- [configs/data/normalization.yaml](configs/data/normalization.yaml)：21 维特征归一化参数。
 - [configs/data/simulation_generation.yaml](configs/data/simulation_generation.yaml)：仿真数据生成、随机扰动、专家控制器参数。
 - [configs/model/direct_mlp_controller.yaml](configs/model/direct_mlp_controller.yaml)：Direct MLP 结构和控制输出尺度。
 - [configs/model/mlp_controller.yaml](configs/model/mlp_controller.yaml)：三分支 MLP 结构。
@@ -334,7 +334,7 @@ raw_data/
   frame_count
 ```
 
-#### 0.2 构造 22 维输入和 2 维监督 target
+#### 0.2 构造 21 维输入和 2 维监督 target
 
 ```bash
 python3 scripts/build_features_from_raw_data.py \
@@ -348,7 +348,7 @@ python3 scripts/build_features_from_raw_data.py \
 - 同帧 `s/kappa/v/a` 写入 `TrajectoryPoint`，用于曲率、预瞄距离和误差计算。
 - `pose.position.position_enu` 提供自车全局位置。
 - `pose.orientation.heading` 提供自车航向。
-- `pose.motion.linear_velocity_enu` 按 heading 转成车体系 `vx/vy`。
+- `pose.motion.linear_velocity_enu` 按 heading 转成车体系 `vx`，`vy` 仅保留在状态对象中，不进入网络输入。
 - `pose.motion.linear_acceleration_flu` 提供 `ax/ay`。
 - `pose.motion.angular_velocity_flu[:, 2]` 提供横摆角速度 `r`。
 - 横向误差使用当前 pose 与有效参考轨迹点的空间最近点计算。
@@ -357,7 +357,7 @@ python3 scripts/build_features_from_raw_data.py \
   `reference_point_time = reference_traj.time.timestamp + relative_time`。
 - 使用 `pose.time.timestamp` 在 `reference_point_time` 上对 `x/y/s/kappa/v/a` 线性插值，得到当前纵向参考点；`e_v/e_s/v_ref/s_ref` 和按预瞄时间换算的预瞄距离使用该插值参考点。
 - `a_ref` 独立从自车投影点向前预瞄 `0.5s` 对应的轨迹点取得，预瞄距离同样由当前纵向参考点的 `v_ref/a_ref` 换算得到。
-- 调用 `vehicle_controller.data.feature_builder` 和 `vehicle_controller.features.FeatureBuilder` 生成固定顺序 22 维输入。
+- 调用 `vehicle_controller.data.feature_builder` 和 `vehicle_controller.features.FeatureBuilder` 生成固定顺序 21 维输入。
 - 从 `control_signal.command` 中提取：
   - `target_steering_wheel_angle`
   - `target_longitudinal_acceleration`
@@ -365,8 +365,8 @@ python3 scripts/build_features_from_raw_data.py \
 NPZ 字段：
 
 ```text
-features              (N, 22)  # 归一化后的网络输入
-raw_features          (N, 22)  # 原始物理量输入
+features              (N, 21)  # 归一化后的网络输入
+raw_features          (N, 21)  # 原始物理量输入
 targets               (N, 2)   # 归一化监督标签，训练使用
 physical_targets      (N, 2)   # 物理单位监督标签，分析和画图使用
 target_valid_mask     (N,)     # 标签有效性，训练加载时自动过滤无效帧
@@ -431,7 +431,7 @@ python3 scripts/train_imitation_from_raw_data.py \
 训练时实际使用：
 
 ```text
-model_input  = features[:, 0:22]
+model_input  = features[:, 0:21]
 supervision  = targets[:, 0:2]
 ```
 
@@ -449,7 +449,7 @@ python3 scripts/validate_supervised_controller.py \
 
 验证内容：
 
-- 将 NPZ 中的 22 维 `features` 输入 checkpoint 对应的神经网络控制器。
+- 将 NPZ 中的 21 维 `features` 输入 checkpoint 对应的神经网络控制器。
 - 得到归一化网络输出，并按模型配置反归一化为物理控制量。
 - 与 `physical_targets` 中保存的原始监督标签对比。
 - 输出归一化误差和物理单位误差。
@@ -496,7 +496,7 @@ data/processed/simulated_controller_dataset.npz
 
 NPZ 字段：
 
-- `features`：归一化后的 22 维输入。
+- `features`：归一化后的 21 维输入。
 - `raw_features`：物理单位输入特征。
 - `targets`：归一化控制标签。
 - `physical_targets`：物理单位 expert 控制标签。
@@ -522,7 +522,7 @@ python3 scripts/generate_training_data.py \
 python3 scripts/prepare_dataset.py input.csv data/processed/controller_dataset.npz
 ```
 
-CSV 必须包含固定 22 维输入列和目标控制列。列名定义在 `vehicle_controller.constants.FEATURE_NAMES` 和 `vehicle_controller.data.schema.TARGET_NAMES` 中。
+CSV 必须包含固定 21 维输入列和目标控制列。列名定义在 `vehicle_controller.constants.FEATURE_NAMES` 和 `vehicle_controller.data.schema.TARGET_NAMES` 中。
 
 ### 3. 计算归一化参数
 
@@ -733,7 +733,7 @@ python3 scripts/benchmark_runtime.py
 负责构造神经网络输入：
 
 - `error_calculator.py`：横向、航向、纵向、速度误差。
-- `feature_builder.py`：组装固定顺序的 22 维输入。
+- `feature_builder.py`：组装固定顺序的 21 维输入。
 - `normalizer.py`：均值方差归一化和裁剪。
 - `validator.py`：部署前输入检查。
 
@@ -742,7 +742,7 @@ python3 scripts/benchmark_runtime.py
 负责数据来源和数据集对象：
 
 - `simulation_generator.py`：基于专家控制器和车辆模型生成训练样本。
-- `feature_builder.py`：从原始 `raw_data` 的 `reference_traj`、`pose`、`control_signal` 构造监督训练 NPZ 所需的 22 维输入和 2 维 target。
+- `feature_builder.py`：从原始 `raw_data` 的 `reference_traj`、`pose`、`control_signal` 构造监督训练 NPZ 所需的 21 维输入和 2 维 target。
 - `expert_controller.py`：生成数据时使用的专家控制器。
 - `synthetic_scenarios.py`：左转、右转、启停、变道、双移线等典型参考场景。
 - `dataset.py`：单步监督训练数据集。
@@ -768,7 +768,7 @@ python3 scripts/benchmark_runtime.py
 - `checkpoint.py`：模型保存和加载。
 - `evaluator.py`、`metrics.py`：预测和误差指标。
 - `offline_plots.py`：离线 expert / neural 控制对比图。
-- `supervised_validation.py`：将监督 NPZ 的 22 维输入送入 checkpoint，和 2 维 target 做输出对比验证。
+- `supervised_validation.py`：将监督 NPZ 的 21 维输入送入 checkpoint，和 2 维 target 做输出对比验证。
 - `loss_plots.py`：loss 曲线和历史 CSV。
 - `closed_loop_trainer.py`：可微分闭环 rollout、闭环 loss 和参考 batch 构造。
 

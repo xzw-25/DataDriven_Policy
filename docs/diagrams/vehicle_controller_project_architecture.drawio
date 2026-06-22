@@ -4,7 +4,7 @@
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="title" value="神经网络车辆控制器工程总体架构（22维输入）" style="text;html=1;align=center;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#1F2937;" parent="1" vertex="1">
+                <mxCell id="title" value="神经网络车辆控制器工程总体架构（21维输入）" style="text;html=1;align=center;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#1F2937;" parent="1" vertex="1">
                     <mxGeometry x="300" y="20" width="1200" height="45" as="geometry"/>
                 </mxCell>
                 <mxCell id="subtitle" value="离线数据与训练 → 模型导出 → 在线控制 → 安全监督 → 车辆闭环" style="text;html=1;align=center;verticalAlign=middle;fontSize=14;fontColor=#6B7280;" parent="1" vertex="1">
@@ -28,10 +28,10 @@
                 <mxCell id="raw-data" value="原始数据源&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;仿真 / MPC专家 / 实车日志&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="80" y="190" width="155" height="70" as="geometry"/>
                 </mxCell>
-                <mxCell id="data-process" value="数据准备&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;同步、清洗、22维特征&lt;br&gt;场景级划分与增强&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;" parent="1" vertex="1">
+                <mxCell id="data-process" value="数据准备&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;同步、清洗、21维特征&lt;br&gt;场景级划分与增强&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="285" y="180" width="180" height="90" as="geometry"/>
                 </mxCell>
-                <mxCell id="dataset" value="Dataset / DataLoader&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;归一化 features_v003&lt;br&gt;曲率、速度、误差均衡采样&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;" parent="1" vertex="1">
+                <mxCell id="dataset" value="Dataset / DataLoader&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;归一化 features_v004&lt;br&gt;曲率、速度、误差均衡采样&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="515" y="180" width="195" height="90" as="geometry"/>
                 </mxCell>
                 <mxCell id="training" value="神经网络训练&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;监督模仿学习&lt;br&gt;闭环滚动训练 / DAgger&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DDD6FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;" parent="1" vertex="1">
@@ -43,7 +43,7 @@
                 <mxCell id="export" value="模型导出与版本固化&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;TorchScript / ONNX&lt;br&gt;模型 + 归一化 + 元数据&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DDD6FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="1255" y="180" width="210" height="90" as="geometry"/>
                 </mxCell>
-                <mxCell id="artifact" value="部署模型包 v003&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;22维契约校验&lt;br&gt;车辆与执行器标定版本&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#C4B5FD;strokeColor=#6D28D9;fontColor=#3B0764;fontStyle=1;" parent="1" vertex="1">
+                <mxCell id="artifact" value="部署模型包 v003&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;21维契约校验&lt;br&gt;车辆与执行器标定版本&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#C4B5FD;strokeColor=#6D28D9;fontColor=#3B0764;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="1515" y="175" width="190" height="100" as="geometry"/>
                 </mxCell>
                 <mxCell id="edge-o1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#7C3AED;strokeWidth=2;" parent="1" source="raw-data" target="data-process" edge="1">
@@ -81,10 +81,10 @@
                 <mxCell id="errors" value="误差计算 / 上游误差&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;e_lat：横向轨迹跟踪误差&lt;br&gt;e_v：纵向速度跟踪误差&lt;br&gt;e_s：纵向位置误差&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="285" y="675" width="195" height="110" as="geometry"/>
                 </mxCell>
-                <mxCell id="feature-builder" value="22维特征构建&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;轨迹点 10&lt;br&gt;参考/曲率/误差 7&lt;br&gt;车辆状态 5&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BFDBFE;strokeColor=#1D4ED8;fontColor=#1E3A8A;fontStyle=1;" parent="1" vertex="1">
+                <mxCell id="feature-builder" value="21维特征构建&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;轨迹点 10&lt;br&gt;参考/曲率/误差 7&lt;br&gt;车辆状态 4&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BFDBFE;strokeColor=#1D4ED8;fontColor=#1E3A8A;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="535" y="575" width="180" height="120" as="geometry"/>
                 </mxCell>
-                <mxCell id="validation" value="输入校验与归一化&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;NaN / 超时 / 物理范围&lt;br&gt;features_v003 标准化&lt;br&gt;OOD基础检测&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BFDBFE;strokeColor=#1D4ED8;fontColor=#1E3A8A;fontStyle=1;" parent="1" vertex="1">
+                <mxCell id="validation" value="输入校验与归一化&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;NaN / 超时 / 物理范围&lt;br&gt;features_v004 标准化&lt;br&gt;OOD基础检测&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BFDBFE;strokeColor=#1D4ED8;fontColor=#1E3A8A;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="765" y="575" width="190" height="120" as="geometry"/>
                 </mxCell>
                 <mxCell id="neural-policy" value="神经网络控制策略&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;原三分支 MLP：128-64&lt;br&gt;可选 Direct MLP：128-128-64&lt;br&gt;输出：δ_des, a_des&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#93C5FD;strokeColor=#1D4ED8;fontColor=#172554;fontStyle=1;" parent="1" vertex="1">
@@ -181,7 +181,7 @@
                 <mxCell id="vehicle" value="车辆与执行器&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;转向 / 驱动 / 制动&lt;br&gt;车辆动力学响应&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBF7D0;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="660" y="1032" width="215" height="85" as="geometry"/>
                 </mxCell>
-                <mxCell id="state-estimation" value="定位与状态估计&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;pose, vx, vy, ax, ay, r, s&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;" parent="1" vertex="1">
+                <mxCell id="state-estimation" value="定位与状态估计&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;pose, vx, ax, ay, r, s&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="1030" y="1040" width="220" height="70" as="geometry"/>
                 </mxCell>
                 <mxCell id="runtime-log" value="运行日志与健康监控&lt;br&gt;&lt;font style=&quot;font-size:11px&quot;&gt;推理耗时 / 降级原因 / 控制响应&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#D1FAE5;strokeColor=#059669;fontColor=#064E3B;fontStyle=1;" parent="1" vertex="1">

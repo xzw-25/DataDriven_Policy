@@ -4,10 +4,10 @@
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="2" value="神经网络车辆控制器：22维信号流与 MLP 结构" style="text;html=0;align=center;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#1F2937;" parent="1" vertex="1">
+                <mxCell id="2" value="神经网络车辆控制器：21维信号流与 MLP 结构" style="text;html=0;align=center;verticalAlign=middle;fontSize=26;fontStyle=1;fontColor=#1F2937;" parent="1" vertex="1">
                     <mxGeometry x="450" y="20" width="1500" height="45" as="geometry"/>
                 </mxCell>
-                <mxCell id="3" value="features_v003 | controller_v004 | 共享隐藏层 128 - 128 - 64" style="text;html=0;align=center;verticalAlign=middle;fontSize=15;fontColor=#6B7280;" parent="1" vertex="1">
+                <mxCell id="3" value="features_v004 | controller_v004 | 共享隐藏层 128 - 128 - 64" style="text;html=0;align=center;verticalAlign=middle;fontSize=15;fontColor=#6B7280;" parent="1" vertex="1">
                     <mxGeometry x="600" y="65" width="1200" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="4" value="1. 原始信号与特征计算" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#F8FAFC;strokeColor=#64748B;fontColor=#334155;fontStyle=1;fontSize=17;verticalAlign=top;spacingTop=10;" parent="1" vertex="1">
@@ -25,7 +25,7 @@
                 <mxCell id="10" value="上游参考轨迹&#xa;P_ref = {(x_i, y_i)}&#xa;kappa, a_ref, v_ref, s_ref" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontStyle=1;fontSize=13;" parent="1" vertex="1">
                     <mxGeometry x="75" y="190" width="230" height="105" as="geometry"/>
                 </mxCell>
-                <mxCell id="11" value="车辆状态&#xa;pose, s&#xa;vx, vy, ax, ay, r" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;fontSize=13;" parent="1" vertex="1">
+                <mxCell id="11" value="车辆状态&#xa;pose, s&#xa;vx, ax, ay, r" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;fontSize=13;" parent="1" vertex="1">
                     <mxGeometry x="345" y="190" width="220" height="105" as="geometry"/>
                 </mxCell>
                 <mxCell id="12" value="轨迹预处理&#xa;P_body = R(-psi)(P_ref - P_ego)&#xa;按0.1~0.5s预瞄时间采样 5 点" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#BFDBFE;strokeColor=#1D4ED8;fontColor=#1E3A8A;fontSize=13;" parent="1" vertex="1">
@@ -34,7 +34,7 @@
                 <mxCell id="13" value="误差计算&#xa;e_lat = -n_ref^T (p_ego - p_ref)&#xa;e_v = v_ref - vx&#xa;e_s = s_ref - s" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=13;" parent="1" vertex="1">
                     <mxGeometry x="345" y="345" width="220" height="125" as="geometry"/>
                 </mxCell>
-                <mxCell id="14" value="22维特征向量 x&#xa;[x1,y1,...,x5,y5, kappa,&#xa;e_lat,e_v,e_s,a_ref,v_ref,s_ref,&#xa;vx,vy,ax,ay,r]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#C7D2FE;strokeColor=#4F46E5;fontColor=#312E81;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                <mxCell id="14" value="21维特征向量 x&#xa;[x1,y1,...,x5,y5, kappa,&#xa;e_lat,e_v,e_s,a_ref,v_ref,s_ref,&#xa;vx,ax,ay,r]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#C7D2FE;strokeColor=#4F46E5;fontColor=#312E81;fontStyle=1;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="155" y="525" width="330" height="130" as="geometry"/>
                 </mxCell>
                 <mxCell id="15" value="输入校验&#xa;有限值 / 时间戳 / 物理范围&#xa;无效输入 -&gt; 传统控制器降级" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FDE68A;strokeColor=#D97706;fontColor=#78350F;fontSize=12;" parent="1" vertex="1">
@@ -43,7 +43,7 @@
                 <mxCell id="16" value="归一化与裁剪&#xa;x_hat_j = clip((x_j - mu_j)/(sigma_j + eps), -5, 5)" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontStyle=1;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="345" y="715" width="220" height="100" as="geometry"/>
                 </mxCell>
-                <mxCell id="17" value="特征切片&#xa;x_traj = x_hat[0:10]&#xa;x_ref = x_hat[10:17]&#xa;x_state = x_hat[17:22]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E0E7FF;strokeColor=#4F46E5;fontColor=#312E81;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                <mxCell id="17" value="特征切片&#xa;x_traj = x_hat[0:10]&#xa;x_ref = x_hat[10:17]&#xa;x_state = x_hat[17:21]" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E0E7FF;strokeColor=#4F46E5;fontColor=#312E81;fontStyle=1;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="155" y="855" width="330" height="105" as="geometry"/>
                 </mxCell>
                 <mxCell id="20" value="轨迹分支输入：10维&#xa;(x1,y1)...(x5,y5)" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DBEAFE;strokeColor=#2563EB;fontColor=#1E3A8A;fontStyle=1;fontSize=13;" parent="1" vertex="1">
@@ -61,7 +61,7 @@
                 <mxCell id="24" value="h_ref = SiLU(LN(W_ref x_ref + b_ref))&#xa;Linear 7 - 32&#xa;输出：32维参考误差编码" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DDD6FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="700" y="660" width="380" height="95" as="geometry"/>
                 </mxCell>
-                <mxCell id="25" value="车辆状态分支输入：5维&#xa;vx,vy,ax,ay,r" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                <mxCell id="25" value="车辆状态分支输入：4维&#xa;vx,ax,ay,r" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontStyle=1;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="700" y="805" width="380" height="75" as="geometry"/>
                 </mxCell>
                 <mxCell id="26" value="h_state = SiLU(LN(W_s x_state + b_s))&#xa;Linear 5 - 32&#xa;输出：32维车辆状态编码" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#BBF7D0;strokeColor=#16A34A;fontColor=#14532D;fontSize=12;" parent="1" vertex="1">

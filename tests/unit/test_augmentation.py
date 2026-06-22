@@ -14,5 +14,8 @@ def test_mirror_reverses_lateral_signs_and_steering() -> None:
     assert mirrored_features[0, 11] == -1.0
     assert mirrored_features[0, 12] == 1.0
     assert mirrored_features[0, 15] == 1.0
+    assert mirrored_features[0, 18] == 1.0
+    assert mirrored_features[0, 19] == -1.0
+    assert mirrored_features[0, 20] == -1.0
     assert mirrored_targets[0, 0] == -1.0
     assert mirrored_targets[0, 1] == 1.0

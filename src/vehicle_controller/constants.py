@@ -19,7 +19,6 @@ FEATURE_NAMES: tuple[str, ...] = (
     "v_ref",
     "s_ref",
     "vx",
-    "vy",
     "ax",
     "ay",
     "r",
@@ -27,4 +26,4 @@ FEATURE_NAMES: tuple[str, ...] = (
 FEATURE_COUNT = len(FEATURE_NAMES)
 TRAJECTORY_FEATURE_COUNT = 10
 REFERENCE_ERROR_FEATURE_COUNT = 7
-STATE_FEATURE_COUNT = 5
+STATE_FEATURE_COUNT = 4

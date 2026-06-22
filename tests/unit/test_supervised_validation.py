@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from vehicle_controller.constants import FEATURE_COUNT
 from vehicle_controller.training.supervised_validation import (
     optional_filtered_array,
     physical_error_metrics,
@@ -14,7 +15,7 @@ def test_physical_targets_from_npz_filters_valid_mask(tmp_path):
     path = tmp_path / "dataset.npz"
     np.savez_compressed(
         path,
-        features=np.zeros((3, 22), dtype=np.float32),
+        features=np.zeros((3, FEATURE_COUNT), dtype=np.float32),
         targets=np.asarray([[0.1, 0.2], [9.0, 9.0], [0.3, 0.4]], dtype=np.float32),
         target_valid_mask=np.asarray([True, False, True]),
         timestamps_s=np.asarray([1.0, 2.0, 3.0]),
