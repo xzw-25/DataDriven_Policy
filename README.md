@@ -494,17 +494,30 @@ artifacts/reports/raw_data_imitation/output_comparison/
     train_metrics.json
     train_predictions.npz
     train_<clip_id>_control_comparison.png
+    feature_signals/
+      train_<clip_id>_feature_preview_xy.png
+      train_<clip_id>_feature_reference_errors.png
+      train_<clip_id>_feature_vehicle_state.png
   validation/
     validation_metrics.json
     validation_predictions.npz
     validation_<clip_id>_control_comparison.png
+    feature_signals/
+      validation_<clip_id>_feature_preview_xy.png
+      validation_<clip_id>_feature_reference_errors.png
+      validation_<clip_id>_feature_vehicle_state.png
   test/
     test_metrics.json
     test_predictions.npz
     test_<clip_id>_control_comparison.png
+    feature_signals/
+      test_<clip_id>_feature_preview_xy.png
+      test_<clip_id>_feature_reference_errors.png
+      test_<clip_id>_feature_vehicle_state.png
 ```
 
 这些对比图会把网络预测的方向盘转角、纵向加速度与监督 target 的物理量曲线画在同一张图中，便于观察训练集拟合、验证集泛化和测试集最终效果。
+`feature_signals/` 会为每个 clip 生成 3 张图：`feature_preview_xy` 会利用数据集中额外保存的 `pose_position_x_enu_m / pose_position_y_enu_m / pose_heading_rad`，将网络输入中的 5 个预瞄点从自车坐标系还原到 ENU 坐标系后，叠加展示多帧轨迹；`feature_reference_errors` 包含 7 个子图展示参考量与跟踪误差；`feature_vehicle_state` 包含 4 个子图分别展示 `vx / ax / ay / r` 的变化。图中单位统一标注为：轨迹、横纵向误差与纵向位置使用 `m`，速度使用 `m/s`，加速度使用 `m/s^2`，横摆角速率 `r` 使用 `deg/s`。
 
 默认会为每个 split 中的全部 clip / scenario 生成对比图。如果数据量很大，可以通过 `--max-comparison-scenarios N` 限制每个 split 最多绘制的 clip 数；`0` 表示不限制。
 

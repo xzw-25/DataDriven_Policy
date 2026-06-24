@@ -22,6 +22,11 @@ def test_write_train_val_test_splits_keeps_scenarios_disjoint(tmp_path) -> None:
         scenario_ids=scenario_ids,
         clip_ids=scenario_ids,
         frame_indices=np.arange(8, dtype=np.int32),
+        positions_enu=np.arange(24, dtype=np.float64).reshape(8, 3),
+        headings_rad=np.linspace(0.0, 0.7, 8, dtype=np.float64),
+        pose_position_x_enu_m=np.linspace(10.0, 17.0, 8, dtype=np.float64),
+        pose_position_y_enu_m=np.linspace(20.0, 27.0, 8, dtype=np.float64),
+        pose_heading_rad=np.linspace(0.0, 0.7, 8, dtype=np.float64),
         feature_names=np.asarray(FEATURE_NAMES),
         target_names=np.asarray(["steering", "accel"]),
         metadata_json=np.asarray(json.dumps({"frame_count": 8})),
@@ -44,6 +49,11 @@ def test_write_train_val_test_splits_keeps_scenarios_disjoint(tmp_path) -> None:
             assert data["features"].shape[1] == FEATURE_COUNT
             assert data["targets"].shape == (data["features"].shape[0], 2)
             assert data["feature_names"].shape == (FEATURE_COUNT,)
+            assert data["positions_enu"].shape == (data["features"].shape[0], 3)
+            assert data["headings_rad"].shape == (data["features"].shape[0],)
+            assert data["pose_position_x_enu_m"].shape == (data["features"].shape[0],)
+            assert data["pose_position_y_enu_m"].shape == (data["features"].shape[0],)
+            assert data["pose_heading_rad"].shape == (data["features"].shape[0],)
             metadata = json.loads(str(data["metadata_json"]))
             assert metadata["split"]["name"] == name
             assert metadata["split"]["sample_count"] == data["features"].shape[0]

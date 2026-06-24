@@ -27,7 +27,10 @@ from vehicle_controller.training.loss_plots import (
     save_loss_history_csv,
 )
 from vehicle_controller.training.metrics import controller_metrics
-from vehicle_controller.training.offline_plots import save_offline_control_comparison_plots
+from vehicle_controller.training.offline_plots import (
+    save_feature_signal_plots,
+    save_offline_control_comparison_plots,
+)
 from vehicle_controller.training.trainer import Trainer
 from vehicle_controller.units import steering_limit_deg_from_config
 from vehicle_controller.utils.config import load_yaml
@@ -273,10 +276,33 @@ def save_split_output_comparison(
     with np.load(dataset_path, allow_pickle=False) as data:
         mask = valid_sample_mask(data)
         scales = target_scales_from_metadata(data, model_config)
+        features = np.asarray(data["features"], dtype=np.float64)[mask]
+        feature_names = (
+            tuple(str(value) for value in data["feature_names"])
+            if "feature_names" in data
+            else None
+        )
         physical_predictions = normalized_predictions.numpy().astype(np.float64) * scales
         physical_targets = physical_targets_from_npz(data, mask, scales)
         timestamps_s = filtered_optional_array(data, "timestamps_s", mask)
         scenario_ids = filtered_optional_array(data, "scenario_ids", mask)
+        pose_headings_rad = filtered_optional_array(data, "pose_heading_rad", mask)
+        if pose_headings_rad is None:
+            pose_headings_rad = filtered_optional_array(data, "headings_rad", mask)
+        pose_positions_enu = None
+        if "positions_enu" in data:
+            pose_positions_enu = np.asarray(data["positions_enu"], dtype=np.float64)[mask]
+        else:
+            pose_x_enu_m = filtered_optional_array(data, "pose_position_x_enu_m", mask)
+            pose_y_enu_m = filtered_optional_array(data, "pose_position_y_enu_m", mask)
+            if pose_x_enu_m is not None and pose_y_enu_m is not None:
+                pose_positions_enu = np.stack(
+                    (
+                        np.asarray(pose_x_enu_m, dtype=np.float64),
+                        np.asarray(pose_y_enu_m, dtype=np.float64),
+                    ),
+                    axis=1,
+                )
         if scenario_ids is None:
             scenario_ids = filtered_optional_array(data, "clip_ids", mask)
     if physical_predictions.shape != physical_targets.shape:
@@ -314,6 +340,21 @@ def save_split_output_comparison(
     print(f"{split_name}_metrics={metrics_path}")
     for plot_path in plot_paths:
         print(f"{split_name}_comparison_plot={plot_path}")
+    feature_plot_paths = save_feature_signal_plots(
+        features,
+        split_output / "feature_signals",
+        timestamps_s=None if timestamps_s is None else np.asarray(timestamps_s, dtype=np.float64),
+        scenario_ids=None if scenario_ids is None else np.asarray(scenario_ids).astype(str),
+        positions_enu=None if pose_positions_enu is None else np.asarray(pose_positions_enu, dtype=np.float64),
+        headings_rad=None if pose_headings_rad is None else np.asarray(pose_headings_rad, dtype=np.float64),
+        dataset_label=split_name,
+        feature_names=feature_names,
+        max_scenarios=max_plot_scenarios,
+        maximum_samples_per_plot=max_plot_samples,
+        show_plots=show_plots,
+    )
+    for plot_path in feature_plot_paths:
+        print(f"{split_name}_feature_plot={plot_path}")
     return metrics
 
 
