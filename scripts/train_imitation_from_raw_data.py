@@ -103,7 +103,7 @@ def main() -> None:
     parser.add_argument("--training-config")
     parser.add_argument("--normalization-config")
     parser.add_argument("--epochs", type=int)
-    parser.add_argument("--device")
+    parser.add_argument("--device", help="Training device. Defaults to cuda when available, else CPU/config.")
     parser.add_argument(
         "--preview-times-s",
         nargs=5,

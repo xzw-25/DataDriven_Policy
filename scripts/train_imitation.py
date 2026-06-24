@@ -25,6 +25,7 @@ from vehicle_controller.training.loss_plots import (
 )
 from vehicle_controller.training.trainer import Trainer
 from vehicle_controller.utils.config import load_yaml
+from vehicle_controller.utils.device import is_cuda_device, preferred_training_device
 from vehicle_controller.utils.random import seed_everything
 
 
@@ -123,7 +124,7 @@ def train_imitation(
     generation_config = load_yaml(generation_config_path)
     generation_time_step_s = float(generation_config["time_step_s"])
     seed = int(main_config.get("seed", 42))
-    resolved_device = device or str(main_config.get("device", "cpu"))
+    resolved_device = preferred_training_device(device, main_config.get("device"))
     resolved_epochs = epochs if epochs is not None else int(training_config["epochs"])
     dataset_path = resolve_dataset_path(None if dataset is None else str(dataset), main_config)
     if resolved_epochs < 0:
@@ -131,12 +132,14 @@ def train_imitation(
 
     seed_everything(seed)
     print(f"data: {dataset_path}")
+    print(f"device={resolved_device}")
     dataset = ControllerDataset.from_npz(dataset_path)
     loader = DataLoader(
         dataset,
         batch_size=min(int(training_config["batch_size"]), len(dataset)),
         shuffle=True,
         num_workers=int(training_config.get("num_workers", 0)),
+        pin_memory=is_cuda_device(resolved_device),
     )
     model = build_model(model_config_path)
     optimizer = torch.optim.AdamW(
@@ -211,7 +214,7 @@ def main() -> None:
     parser.add_argument("--dataset")
     parser.add_argument("--epochs", type=int)
     parser.add_argument("--output", default="artifacts/checkpoints/baseline.pt")
-    parser.add_argument("--device")
+    parser.add_argument("--device", help="Training device. Defaults to cuda when available, else CPU/config.")
     parser.add_argument("--model-config")
     parser.add_argument("--training-config")
     parser.add_argument(

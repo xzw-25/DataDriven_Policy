@@ -31,6 +31,7 @@ from vehicle_controller.training.metrics import controller_metrics
 from vehicle_controller.training.offline_plots import save_offline_control_comparison_plots
 from vehicle_controller.training.trainer import Trainer
 from vehicle_controller.utils.config import load_yaml
+from vehicle_controller.utils.device import is_cuda_device, preferred_training_device
 from vehicle_controller.utils.random import seed_everything
 
 
@@ -172,7 +173,7 @@ def train_validate_from_features(
         if training_config
         else nested_config_path(main_config, "training")
     )
-    resolved_device = device or str(main_config.get("device", "cpu"))
+    resolved_device = preferred_training_device(device, main_config.get("device"))
     resolved_seed = int(seed if seed is not None else main_config.get("seed", 42))
     training = dict(load_yaml(training_config_path))
     resolved_epochs = int(epochs if epochs is not None else training["epochs"])
@@ -209,12 +210,14 @@ def train_validate_from_features(
         batch_size=min(resolved_batch_size, len(train_dataset)),
         shuffle=True,
         num_workers=int(training.get("num_workers", 0)),
+        pin_memory=is_cuda_device(resolved_device),
     )
     validation_loader = DataLoader(
         validation_dataset,
         batch_size=min(resolved_batch_size, len(validation_dataset)),
         shuffle=False,
         num_workers=int(training.get("num_workers", 0)),
+        pin_memory=is_cuda_device(resolved_device),
     )
 
     model = build_model(model_config_path)
@@ -236,6 +239,7 @@ def train_validate_from_features(
 
     batch_losses_by_epoch: list[tuple[float, ...]] = []
     epoch_losses: list[float] = []
+    print(f"device={resolved_device}")
     for epoch in range(resolved_epochs):
         result = trainer.train_epoch(train_loader)
         batch_losses_by_epoch.append(result.batch_losses)
@@ -325,7 +329,7 @@ def main() -> None:
     parser.add_argument("--validation-fraction", type=float, default=0.2)
     parser.add_argument("--epochs", type=int)
     parser.add_argument("--batch-size", type=int)
-    parser.add_argument("--device")
+    parser.add_argument("--device", help="Training device. Defaults to cuda when available, else CPU/config.")
     parser.add_argument("--seed", type=int)
     parser.add_argument("--max-validation-scenarios", type=int, default=8)
     parser.add_argument("--show-plots", action="store_true")

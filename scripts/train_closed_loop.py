@@ -27,6 +27,7 @@ from vehicle_controller.training.loss_plots import (
 )
 from vehicle_controller.units import steering_limit_deg_from_config
 from vehicle_controller.utils.config import load_yaml
+from vehicle_controller.utils.device import preferred_training_device
 from vehicle_controller.utils.random import seed_everything
 from vehicle_controller.vehicle.parameter_loader import VehicleParameters
 
@@ -87,7 +88,7 @@ def main() -> None:
     parser.add_argument("--horizon-steps", type=int)
     parser.add_argument("--batch-size", type=int)
     parser.add_argument("--learning-rate", type=float)
-    parser.add_argument("--device")
+    parser.add_argument("--device", help="Training device. Defaults to cuda when available, else CPU/config.")
     parser.add_argument(
         "--loss-curve-output",
         default="artifacts/reports/closed_loop_training/loss_curve.png",
@@ -116,7 +117,10 @@ def main() -> None:
     seed = int(closed_loop_config.get("seed", main_config.get("seed", 42)))
     seed_everything(seed)
     rng = np.random.default_rng(seed)
-    device = args.device or str(closed_loop_config.get("device", main_config.get("device", "cpu")))
+    device = preferred_training_device(
+        args.device,
+        closed_loop_config.get("device", main_config.get("device")),
+    )
     epochs = args.epochs if args.epochs is not None else int(closed_loop_config.get("epochs", 10))
     horizon_steps = (
         args.horizon_steps
