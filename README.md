@@ -9,6 +9,7 @@
 - [神经网络车辆控制器整体设计方案](neural_network_vehicle_controller_design.md)
 - [工程目录结构与模块说明](docs/project_structure.md)
 - [训练 loss 计算方法](docs/training_losses.md)
+- [网络控制器训练框架 HTML 展示页](docs/network_controller_training_framework.html)
 - [工程总体架构图](docs/diagrams/vehicle_controller_project_architecture.drawio)
 - [神经网络结构图](docs/diagrams/vehicle_controller_neural_network_architecture.drawio)
 - [架构图说明](docs/diagrams/README.md)
@@ -22,16 +23,19 @@
 专家控制器 + 车辆模型闭环仿真      task_manifest + record_pkl 切片
     |                               |
     v                               v
-NPZ 训练数据 <------------------ raw_data -> features / targets
+全量 NPZ 数据 <---------------- raw_data -> features / targets
     |  features / raw_features / targets / physical_targets
     v
-模仿学习训练
+train / val / test NPZ 划分
+    v
+模仿学习训练 + validation loss 监控
     |
     v
 baseline checkpoint
     |--------------------------|
     v                          v
-离线验证/训练展示              可微分闭环 rollout 微调
+train/val/test 输出对比         可微分闭环 rollout 微调
+离线验证 / 训练展示
                                |
                                v
                          closed-loop checkpoint
@@ -45,7 +49,7 @@ baseline checkpoint
 
 核心运行链路由以下部分组成：
 
-- `data/`：专家控制器、典型场景、数据生成、NPZ 数据集读取。
+- `data/`：专家控制器、典型场景、数据生成、NPZ 数据集读取和数据划分。
 - `features/`：坐标系转换后的 21 维特征构建、误差计算、归一化、输入校验。
 - `models/`：MLP、Direct MLP、GRU 控制器模型。
 - `training/`：监督训练、loss、指标、检查点、离线图表、可微分闭环训练。
@@ -132,14 +136,14 @@ python3 scripts/build_features_from_raw_data.py \
   --raw-data data/interim/clean_ad_policy_sim_v1_aba9e399_raw_data.pkl \
   --output data/processed/clean_ad_policy_sim_v1_aba9e399_imitation_dataset.npz
 
-# 3. 一键构建 NPZ 并运行模仿学习训练
+# 3. 一键构建 NPZ、自动划分 train/val/test，并运行模仿学习训练
 python3 scripts/train_imitation_from_raw_data.py \
   --raw-data data/interim/clean_ad_policy_sim_v1_aba9e399_raw_data.pkl \
   --dataset-output data/processed/clean_ad_policy_sim_v1_aba9e399_imitation_dataset.npz \
   --checkpoint-output artifacts/checkpoints/raw_data_imitation.pt \
   --epochs 50
 
-# 4. 对比网络控制器输出和原始监督 target
+# 4. 可选：对完整数据集再次执行监督验证
 python3 scripts/validate_supervised_controller.py \
   --checkpoint artifacts/checkpoints/raw_data_imitation.pt \
   --dataset data/processed/clean_ad_policy_sim_v1_aba9e399_imitation_dataset.npz \
@@ -278,7 +282,7 @@ drive_torque_cmd, brake_decel_cmd
 
 常用配置：
 
-- [configs/data/dataset.yaml](configs/data/dataset.yaml)：数据目录、采样周期、预瞄时间、曲率权重、数据划分比例。
+- [configs/data/dataset.yaml](configs/data/dataset.yaml)：数据目录、split 输出目录、采样周期、预瞄时间、曲率权重、train/validation/test 数据划分比例。
 - [configs/data/normalization.yaml](configs/data/normalization.yaml)：21 维特征归一化参数。
 - [configs/data/simulation_generation.yaml](configs/data/simulation_generation.yaml)：仿真数据生成、随机扰动、专家控制器参数。
 - [configs/model/direct_mlp_controller.yaml](configs/model/direct_mlp_controller.yaml)：Direct MLP 结构和控制输出尺度。
@@ -393,6 +397,27 @@ targets[:, 1] = physical_targets[:, 1] / accel_limit_mps2
 
 `physical_targets` 保留真实物理单位，便于输出对比验证和部署侧反归一化检查。
 
+`build_features_from_raw_data.py` 会在保存全量 NPZ 后，自动根据 `configs/data/dataset.yaml` 中的比例生成 train / validation / test 三份数据集。默认比例为：
+
+```text
+train_ratio      = 0.70
+validation_ratio = 0.15
+test_ratio       = 0.15
+```
+
+划分优先使用 `scenario_ids`，没有该字段时使用 `clip_ids`，从而避免同一个 clip 的帧同时出现在 train、validation 和 test 中。如果二者都不存在，则退化为样本级随机划分。
+
+默认 split 输出目录由 `configs/data/dataset.yaml` 的 `split_dir` 控制：
+
+```text
+data/splits/
+  <dataset_stem>_train.npz
+  <dataset_stem>_val.npz
+  <dataset_stem>_test.npz
+```
+
+每个 split NPZ 会同步切片所有帧对齐字段，如 `features`、`raw_features`、`targets`、`physical_targets`、`target_valid_mask`、`clip_ids`、`frame_indices`、`timestamps_s`。`feature_names`、`target_names` 等非帧对齐字段会原样保留。`metadata_json` 中会额外记录 split 名称、样本数、原始索引和 seed。
+
 #### 0.3 可视化 reference_traj 轨迹
 
 ```bash
@@ -431,13 +456,61 @@ python3 scripts/train_imitation_from_raw_data.py \
 训练时实际使用：
 
 ```text
-model_input  = features[:, 0:21]
-supervision  = targets[:, 0:2]
+train:
+  model_input = train.features[:, 0:21]
+  supervision = train.targets[:, 0:2]
+
+validation:
+  每个 epoch 结束后只做前向评估 validation loss，不参与梯度更新。
+
+test:
+  训练完成后做最终输出对比和指标统计，不参与训练过程。
 ```
 
-`loss_curve.png` 的纵轴使用对数坐标，便于观察训练后期小 loss 的变化。
+`train_imitation.py` 会优先查找与 `--dataset` 同名的 split 文件：
+
+```text
+data/splits/<dataset_stem>_train.npz
+data/splits/<dataset_stem>_val.npz
+data/splits/<dataset_stem>_test.npz
+```
+
+也可以显式指定：
+
+```bash
+python3 scripts/train_imitation.py \
+  --train-dataset data/splits/<dataset_stem>_train.npz \
+  --validation-dataset data/splits/<dataset_stem>_val.npz \
+  --test-dataset data/splits/<dataset_stem>_test.npz
+```
+
+`loss_curve.png` 的纵轴使用对数坐标，并同时绘制 batch training loss、epoch mean training loss 和 epoch mean validation loss。对应 CSV 中会包含 `validation_epoch_loss` 列。
+
+训练完成后会分别在 train、validation 和 test 上生成网络输出对比：
+
+```text
+artifacts/reports/raw_data_imitation/output_comparison/
+  train/
+    train_metrics.json
+    train_predictions.npz
+    train_<clip_id>_control_comparison.png
+  validation/
+    validation_metrics.json
+    validation_predictions.npz
+    validation_<clip_id>_control_comparison.png
+  test/
+    test_metrics.json
+    test_predictions.npz
+    test_<clip_id>_control_comparison.png
+```
+
+这些对比图会把网络预测的方向盘转角、纵向加速度与监督 target 的物理量曲线画在同一张图中，便于观察训练集拟合、验证集泛化和测试集最终效果。
+
+默认会为每个 split 中的全部 clip / scenario 生成对比图。如果数据量很大，可以通过 `--max-comparison-scenarios N` 限制每个 split 最多绘制的 clip 数；`0` 表示不限制。
 
 #### 0.5 输出对比验证
+
+模仿学习训练结束后会自动输出 train / validation / test 三个 split 的预测对比。如果需要对任意 checkpoint 和任意 NPZ 额外做一次完整监督验证，可使用：
 
 ```bash
 python3 scripts/validate_supervised_controller.py \
@@ -543,11 +616,19 @@ python3 scripts/train_imitation.py \
   --output artifacts/checkpoints/baseline.pt
 ```
 
+训练数据选择规则：
+
+- 如果存在 `data/splits/<dataset_stem>_train.npz`、`data/splits/<dataset_stem>_val.npz`、`data/splits/<dataset_stem>_test.npz`，脚本会自动使用三份 split。
+- 如果 split 文件不存在，则保持兼容旧流程，使用 `--dataset` 指向的全量 NPZ 训练。
+- 也可以通过 `--train-dataset`、`--validation-dataset`、`--test-dataset` 显式指定三份数据。
+- `--device` 不指定时会优先使用 CUDA；没有 CUDA 时回退 CPU 或配置中的设备。
+
 训练输出：
 
 - `artifacts/checkpoints/baseline.pt`：模型检查点，包含模型参数、优化器状态和模型配置。
-- `artifacts/reports/imitation_training/loss_curve.png`：loss 随迭代下降曲线。
-- `artifacts/reports/imitation_training/loss_history.csv`：batch 和 epoch loss 历史。
+- `artifacts/reports/imitation_training/loss_curve.png`：训练 batch loss、epoch train loss 和 epoch validation loss 曲线。
+- `artifacts/reports/imitation_training/loss_history.csv`：batch、epoch train、epoch validation loss 历史。
+- `artifacts/reports/imitation_training/output_comparison/`：train / validation / test 上的神经网络输出与监督 target 对比图、metrics 和 predictions。
 - `artifacts/reports/training_showcase/`：训练典型场景闭环展示图。
 
 使用其他模型配置：
@@ -747,7 +828,7 @@ python3 scripts/benchmark_runtime.py
 - `synthetic_scenarios.py`：左转、右转、启停、变道、双移线等典型参考场景。
 - `dataset.py`：单步监督训练数据集。
 - `sequence_dataset.py`：时序模型数据集。
-- `augmentation.py`、`sampler.py`、`split.py`：数据增强、采样和划分。
+- `augmentation.py`、`sampler.py`、`split.py`：数据增强、采样和场景级 train / validation / test 划分。
 
 ### `src/vehicle_controller/models/`
 
@@ -769,7 +850,7 @@ python3 scripts/benchmark_runtime.py
 - `evaluator.py`、`metrics.py`：预测和误差指标。
 - `offline_plots.py`：离线 expert / neural 控制对比图。
 - `supervised_validation.py`：将监督 NPZ 的 21 维输入送入 checkpoint，和 2 维 target 做输出对比验证。
-- `loss_plots.py`：loss 曲线和历史 CSV。
+- `loss_plots.py`：训练 batch loss、epoch train loss、epoch validation loss 曲线和历史 CSV。
 - `closed_loop_trainer.py`：可微分闭环 rollout、闭环 loss 和参考 batch 构造。
 
 ### `src/vehicle_controller/vehicle/`
@@ -822,7 +903,7 @@ python3 scripts/benchmark_runtime.py
 
 ### `src/vehicle_controller/utils/`
 
-通用工具，包括 YAML 配置加载、随机种子设置和计时工具。
+通用工具，包括 YAML 配置加载、随机种子设置、训练设备选择和计时工具。训练脚本未显式指定 `--device` 时，会通过 `device.py` 优先选择 CUDA，无法使用 CUDA 时回退 CPU 或配置设备。
 
 ## 产物目录
 
@@ -832,6 +913,11 @@ python3 scripts/benchmark_runtime.py
 data/processed/
   simulated_controller_dataset.npz
   clean_ad_policy_sim_v1_aba9e399_imitation_dataset.npz
+
+data/splits/
+  clean_ad_policy_sim_v1_aba9e399_imitation_dataset_train.npz
+  clean_ad_policy_sim_v1_aba9e399_imitation_dataset_val.npz
+  clean_ad_policy_sim_v1_aba9e399_imitation_dataset_test.npz
 
 data/interim/
   clean_ad_policy_sim_v1_aba9e399_raw_data.pkl
@@ -843,6 +929,9 @@ artifacts/checkpoints/
 
 artifacts/reports/
   imitation_training/
+    loss_curve.png
+    loss_history.csv
+    output_comparison/
   raw_data_imitation/
   training_showcase/
   offline_validation/

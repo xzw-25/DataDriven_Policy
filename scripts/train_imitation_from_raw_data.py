@@ -49,6 +49,9 @@ def train_imitation_from_raw_data(
     no_loss_plot: bool = False,
     loss_curve_output: str | Path = "artifacts/reports/raw_data_imitation/loss_curve.png",
     loss_history_output: str | Path = "artifacts/reports/raw_data_imitation/loss_history.csv",
+    comparison_output_dir: str | Path | None = None,
+    max_comparison_scenarios: int | None = None,
+    max_comparison_samples: int = 2000,
     no_showcase: bool = False,
     showcase_output_dir: str | Path = "artifacts/reports/raw_data_imitation/showcase",
     show_plots: bool = False,
@@ -75,6 +78,9 @@ def train_imitation_from_raw_data(
         loss_curve_output=loss_curve_output,
         loss_history_output=loss_history_output,
         no_loss_plot=no_loss_plot,
+        comparison_output_dir=comparison_output_dir,
+        max_comparison_scenarios=max_comparison_scenarios,
+        max_comparison_samples=max_comparison_samples,
         showcase_output_dir=showcase_output_dir,
         no_showcase=no_showcase,
         show_plots=show_plots,
@@ -125,6 +131,14 @@ def main() -> None:
         "--loss-history-output",
         default="artifacts/reports/raw_data_imitation/loss_history.csv",
     )
+    parser.add_argument("--comparison-output-dir")
+    parser.add_argument(
+        "--max-comparison-scenarios",
+        type=int,
+        default=0,
+        help="Maximum clips/scenarios to plot per split. Use 0 to plot all.",
+    )
+    parser.add_argument("--max-comparison-samples", type=int, default=2000)
     parser.add_argument("--no-showcase", action="store_true")
     parser.add_argument(
         "--showcase-output-dir",
@@ -150,6 +164,11 @@ def main() -> None:
         no_loss_plot=args.no_loss_plot,
         loss_curve_output=args.loss_curve_output,
         loss_history_output=args.loss_history_output,
+        comparison_output_dir=args.comparison_output_dir,
+        max_comparison_scenarios=(
+            None if args.max_comparison_scenarios <= 0 else args.max_comparison_scenarios
+        ),
+        max_comparison_samples=args.max_comparison_samples,
         no_showcase=args.no_showcase,
         showcase_output_dir=args.showcase_output_dir,
         show_plots=args.show_plots,

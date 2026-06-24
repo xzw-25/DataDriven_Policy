@@ -95,7 +95,7 @@ def save_offline_control_comparison_plots(
     timestamps_s: np.ndarray | None = None,
     scenario_ids: np.ndarray | None = None,
     dataset_label: str = "validation",
-    max_scenarios: int = 8,
+    max_scenarios: int | None = 8,
     maximum_samples_per_plot: int = 2000,
     show_plots: bool = False,
 ) -> tuple[Path, ...]:
@@ -140,9 +140,12 @@ def save_offline_control_comparison_plots(
         )
         return tuple(plot_paths)
 
-    if max_scenarios <= 0:
+    if max_scenarios is not None and max_scenarios <= 0:
         raise ValueError("max_scenarios must be positive")
-    for scenario_id in _ordered_unique(scenarios)[:max_scenarios]:
+    selected_scenarios = _ordered_unique(scenarios)
+    if max_scenarios is not None:
+        selected_scenarios = selected_scenarios[:max_scenarios]
+    for scenario_id in selected_scenarios:
         scenario_mask = scenarios == scenario_id
         order = np.flatnonzero(scenario_mask)
         if timestamps is not None:

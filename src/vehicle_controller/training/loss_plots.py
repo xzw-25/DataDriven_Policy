@@ -20,6 +20,7 @@ class LossHistory:
     batch_losses: tuple[float, ...]
     epoch_iterations: tuple[int, ...]
     epoch_losses: tuple[float, ...]
+    validation_epoch_losses: tuple[float, ...] = ()
 
 
 def save_loss_history_csv(history: LossHistory, output_path: str | Path) -> Path:
@@ -31,9 +32,23 @@ def save_loss_history_csv(history: LossHistory, output_path: str | Path) -> Path
     }
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
-        writer.writerow(("iteration", "batch_loss", "epoch_mean_loss"))
+        has_validation = bool(history.validation_epoch_losses)
+        header = ["iteration", "batch_loss", "epoch_mean_loss"]
+        if has_validation:
+            header.append("validation_epoch_loss")
+        writer.writerow(header)
+        validation_lookup = {
+            iteration: loss
+            for iteration, loss in zip(
+                history.epoch_iterations,
+                history.validation_epoch_losses,
+            )
+        }
         for iteration, batch_loss in zip(history.iterations, history.batch_losses):
-            writer.writerow((iteration, batch_loss, epoch_lookup.get(iteration, "")))
+            row: list[object] = [iteration, batch_loss, epoch_lookup.get(iteration, "")]
+            if has_validation:
+                row.append(validation_lookup.get(iteration, ""))
+            writer.writerow(row)
     return path
 
 
@@ -53,10 +68,18 @@ def save_loss_curve(
     batch_losses = np.asarray(history.batch_losses, dtype=np.float64)
     epoch_iterations = np.asarray(history.epoch_iterations, dtype=np.int64)
     epoch_losses = np.asarray(history.epoch_losses, dtype=np.float64)
-    if not np.all(np.isfinite(batch_losses)) or not np.all(np.isfinite(epoch_losses)):
+    validation_losses = np.asarray(history.validation_epoch_losses, dtype=np.float64)
+    if (
+        not np.all(np.isfinite(batch_losses))
+        or not np.all(np.isfinite(epoch_losses))
+        or not np.all(np.isfinite(validation_losses))
+    ):
         raise ValueError("Loss history contains non-finite values")
+    if len(validation_losses) not in (0, len(epoch_iterations)):
+        raise ValueError("validation_epoch_losses must match epoch_iterations when provided")
     plot_batch_losses = np.maximum(batch_losses, LOSS_PLOT_FLOOR)
     plot_epoch_losses = np.maximum(epoch_losses, LOSS_PLOT_FLOOR)
+    plot_validation_losses = np.maximum(validation_losses, LOSS_PLOT_FLOOR)
 
     plt = load_pyplot(show_plots)
     figure, axis = plt.subplots(1, 1, figsize=(11, 5.8))
@@ -75,6 +98,14 @@ def save_loss_curve(
             linewidth=2.0,
             label="Epoch mean training loss",
         )
+    if len(plot_validation_losses) > 0:
+        axis.plot(
+            epoch_iterations,
+            plot_validation_losses,
+            marker="s",
+            linewidth=2.0,
+            label="Epoch mean validation loss",
+        )
     axis.set_title("Imitation Learning Training Loss")
     axis.set_xlabel("Optimizer iteration")
     axis.set_ylabel("Loss")
@@ -92,6 +123,7 @@ def save_loss_curve(
 def make_loss_history(
     batch_losses_by_epoch: Sequence[Sequence[float]],
     epoch_losses: Sequence[float],
+    validation_epoch_losses: Sequence[float] | None = None,
 ) -> LossHistory:
     iterations: list[int] = []
     batch_losses: list[float] = []
@@ -106,9 +138,17 @@ def make_loss_history(
             epoch_iterations.append(iteration)
     if len(epoch_iterations) != len(epoch_losses):
         raise ValueError("epoch_losses must match non-empty epoch loss groups")
+    validation_losses = (
+        ()
+        if validation_epoch_losses is None
+        else tuple(float(loss) for loss in validation_epoch_losses)
+    )
+    if validation_losses and len(validation_losses) != len(epoch_iterations):
+        raise ValueError("validation_epoch_losses must match non-empty epoch loss groups")
     return LossHistory(
         iterations=tuple(iterations),
         batch_losses=tuple(batch_losses),
         epoch_iterations=tuple(epoch_iterations),
         epoch_losses=tuple(float(loss) for loss in epoch_losses),
+        validation_epoch_losses=validation_losses,
     )

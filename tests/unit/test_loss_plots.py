@@ -38,6 +38,27 @@ def test_loss_history_csv_and_curve_are_written(tmp_path) -> None:
     assert rows[2] == ["2", "0.3", "0.35"]
 
 
+def test_loss_history_csv_includes_validation_loss_when_available(tmp_path) -> None:
+    history = make_loss_history(
+        batch_losses_by_epoch=((0.4, 0.3), (0.2,)),
+        epoch_losses=(0.35, 0.2),
+        validation_epoch_losses=(0.5, 0.25),
+    )
+
+    csv_path = save_loss_history_csv(history, tmp_path / "loss_history.csv")
+
+    with csv_path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.reader(handle))
+    assert rows[0] == [
+        "iteration",
+        "batch_loss",
+        "epoch_mean_loss",
+        "validation_epoch_loss",
+    ]
+    assert rows[2] == ["2", "0.3", "0.35", "0.5"]
+    assert rows[3] == ["3", "0.2", "0.2", "0.25"]
+
+
 def test_loss_curve_uses_log_y_axis(monkeypatch, tmp_path) -> None:
     calls: dict[str, object] = {}
 

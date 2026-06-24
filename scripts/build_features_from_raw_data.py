@@ -10,12 +10,15 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 try:
     from _bootstrap import PROJECT_ROOT
 except ModuleNotFoundError:  # pragma: no cover - used when imported as scripts.*
     from scripts._bootstrap import PROJECT_ROOT
 
 from vehicle_controller.data.feature_builder import build_raw_feature_dataset
+from vehicle_controller.data.split import split_scenarios
 from vehicle_controller.features.normalizer import FeatureNormalizer
 from vehicle_controller.units import steering_limit_deg_from_config
 from vehicle_controller.utils.config import load_yaml
@@ -39,6 +42,166 @@ def config_value(config: Mapping[str, object], section: str, key: str) -> Path:
     return project_path(str(section_config[key]))
 
 
+def _ratio(config: Mapping[str, object], key: str, default: float) -> float:
+    value = float(config.get(key, default))
+    if value < 0.0:
+        raise ValueError(f"{key} must be non-negative")
+    return value
+
+
+def _normalized_split_ratios(
+    data_config: Mapping[str, object],
+) -> tuple[float, float, float]:
+    train_ratio = _ratio(data_config, "train_ratio", 0.7)
+    validation_ratio = _ratio(data_config, "validation_ratio", 0.15)
+    test_ratio = _ratio(data_config, "test_ratio", 0.15)
+    total = train_ratio + validation_ratio + test_ratio
+    if total <= 0.0:
+        raise ValueError("At least one split ratio must be positive")
+    return train_ratio / total, validation_ratio / total, test_ratio / total
+
+
+def _split_indices_by_count(
+    count: int,
+    train_ratio: float,
+    validation_ratio: float,
+    seed: int,
+) -> dict[str, np.ndarray]:
+    if count <= 0:
+        raise ValueError("Cannot split an empty dataset")
+    indices = np.arange(count, dtype=np.int64)
+    rng = np.random.default_rng(seed)
+    rng.shuffle(indices)
+    train_end = int(count * train_ratio)
+    validation_end = train_end + int(count * validation_ratio)
+    return {
+        "train": np.sort(indices[:train_end]),
+        "val": np.sort(indices[train_end:validation_end]),
+        "test": np.sort(indices[validation_end:]),
+    }
+
+
+def _split_indices_by_scenario(
+    scenario_ids: np.ndarray,
+    train_ratio: float,
+    validation_ratio: float,
+    seed: int,
+) -> dict[str, np.ndarray]:
+    train_ids, validation_ids, test_ids = split_scenarios(
+        [str(value) for value in scenario_ids],
+        train_ratio,
+        validation_ratio,
+        seed=seed,
+    )
+    scenario_values = np.asarray([str(value) for value in scenario_ids])
+    return {
+        "train": np.flatnonzero(np.isin(scenario_values, list(train_ids))).astype(np.int64),
+        "val": np.flatnonzero(np.isin(scenario_values, list(validation_ids))).astype(np.int64),
+        "test": np.flatnonzero(np.isin(scenario_values, list(test_ids))).astype(np.int64),
+    }
+
+
+def _split_indices_from_npz(
+    npz: np.lib.npyio.NpzFile,
+    train_ratio: float,
+    validation_ratio: float,
+    seed: int,
+) -> dict[str, np.ndarray]:
+    count = int(npz["features"].shape[0])
+    if "scenario_ids" in npz:
+        return _split_indices_by_scenario(
+            np.asarray(npz["scenario_ids"]),
+            train_ratio,
+            validation_ratio,
+            seed,
+        )
+    if "clip_ids" in npz:
+        return _split_indices_by_scenario(
+            np.asarray(npz["clip_ids"]),
+            train_ratio,
+            validation_ratio,
+            seed,
+        )
+    return _split_indices_by_count(count, train_ratio, validation_ratio, seed)
+
+
+def _metadata_with_split(
+    metadata_value: np.ndarray,
+    *,
+    split_name: str,
+    split_indices: np.ndarray,
+    split_counts: Mapping[str, int],
+    split_seed: int,
+) -> np.ndarray:
+    metadata = dict(json.loads(str(metadata_value)))
+    metadata["split"] = {
+        "name": split_name,
+        "sample_count": int(len(split_indices)),
+        "indices": [int(value) for value in split_indices],
+        "all_counts": {name: int(count) for name, count in split_counts.items()},
+        "seed": int(split_seed),
+    }
+    return np.asarray(json.dumps(metadata, sort_keys=True))
+
+
+def _split_npz_payload(
+    npz: np.lib.npyio.NpzFile,
+    indices: np.ndarray,
+    *,
+    split_name: str,
+    split_counts: Mapping[str, int],
+    split_seed: int,
+) -> dict[str, np.ndarray]:
+    frame_count = int(npz["features"].shape[0])
+    payload: dict[str, np.ndarray] = {}
+    for key in npz.files:
+        value = npz[key]
+        if key == "metadata_json":
+            payload[key] = _metadata_with_split(
+                value,
+                split_name=split_name,
+                split_indices=indices,
+                split_counts=split_counts,
+                split_seed=split_seed,
+            )
+        elif value.shape and value.shape[0] == frame_count:
+            payload[key] = value[indices].copy()
+        else:
+            payload[key] = value.copy()
+    return payload
+
+
+def write_train_val_test_splits(
+    dataset_path: str | Path,
+    split_dir: str | Path,
+    *,
+    train_ratio: float,
+    validation_ratio: float,
+    seed: int,
+) -> dict[str, Path]:
+    dataset = project_path(dataset_path)
+    output_dir = project_path(split_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    with np.load(dataset, allow_pickle=False) as npz:
+        split_indices = _split_indices_from_npz(npz, train_ratio, validation_ratio, seed)
+        split_counts = {name: int(len(indices)) for name, indices in split_indices.items()}
+        split_paths = {
+            name: output_dir / f"{dataset.stem}_{name}.npz"
+            for name in ("train", "val", "test")
+        }
+        for name, path in split_paths.items():
+            payload = _split_npz_payload(
+                npz,
+                split_indices[name],
+                split_name=name,
+                split_counts=split_counts,
+                split_seed=seed,
+            )
+            np.savez_compressed(path, **payload)
+    return split_paths
+
+
 def build_features_from_raw_data(
     raw_data_path: str | Path,
     output_path: str | Path,
@@ -54,6 +217,7 @@ def build_features_from_raw_data(
     input_path = project_path(raw_data_path)
     output = project_path(output_path)
     main_config = load_yaml(project_path(config_path))
+    data_config = load_yaml(config_value(main_config, "data", "config"))
     resolved_model_config_path = (
         project_path(model_config_path)
         if model_config_path is not None
@@ -107,7 +271,16 @@ def build_features_from_raw_data(
         "entry_count": int(len(entries)),
         "frame_count": int(dataset.raw_features.shape[0]),
     }
-    return dataset.save_npz(output, metadata)
+    saved_path = dataset.save_npz(output, metadata)
+    train_ratio, validation_ratio, _ = _normalized_split_ratios(data_config)
+    write_train_val_test_splits(
+        saved_path,
+        str(data_config.get("split_dir", saved_path.parent)),
+        train_ratio=train_ratio,
+        validation_ratio=validation_ratio,
+        seed=int(main_config.get("seed", 42)),
+    )
+    return saved_path
 
 
 def main() -> None:
@@ -162,7 +335,6 @@ def main() -> None:
         curvature_weights=tuple(float(value) for value in args.curvature_weights),
     )
     data = dict()
-    import numpy as np
 
     with np.load(output, allow_pickle=False) as npz:
         metadata = json.loads(str(npz["metadata_json"]))
@@ -181,6 +353,14 @@ def main() -> None:
     print(f"valid_targets={data['valid_targets']}")
     print(f"features_are_normalized={data['features_are_normalized']}")
     print(f"frames={data['frame_count']}")
+    main_config = load_yaml(project_path(args.config))
+    data_config = load_yaml(config_value(main_config, "data", "config"))
+    split_dir = project_path(str(data_config.get("split_dir", output.parent)))
+    for split_name in ("train", "val", "test"):
+        split_path = split_dir / f"{output.stem}_{split_name}.npz"
+        with np.load(split_path, allow_pickle=False) as npz:
+            print(f"{split_name}_output={split_path}")
+            print(f"{split_name}_features_shape={tuple(npz['features'].shape)}")
 
 
 if __name__ == "__main__":
