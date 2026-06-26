@@ -15,14 +15,13 @@ class FirstOrderActuatorModel:
     def step(self, target: VehicleCommand, dt: float) -> VehicleCommand:
         alpha = dt / (self.time_constant_s + dt)
         self.command = VehicleCommand(
-            steering_wheel_angle_rad=self.command.steering_wheel_angle_rad
-            + alpha * (target.steering_wheel_angle_rad - self.command.steering_wheel_angle_rad),
-            drive_torque_nm=self.command.drive_torque_nm
-            + alpha * (target.drive_torque_nm - self.command.drive_torque_nm),
+            steering_wheel_angle_deg=self.command.steering_wheel_angle_deg
+            + alpha * (target.steering_wheel_angle_deg - self.command.steering_wheel_angle_deg),
+            drive_wheel_torque_nm=self.command.drive_wheel_torque_nm
+            + alpha * (target.drive_wheel_torque_nm - self.command.drive_wheel_torque_nm),
             brake_decel_mps2=self.command.brake_decel_mps2
             + alpha * (target.brake_decel_mps2 - self.command.brake_decel_mps2),
             source=target.source,
             reason=target.reason,
         )
         return self.command
-

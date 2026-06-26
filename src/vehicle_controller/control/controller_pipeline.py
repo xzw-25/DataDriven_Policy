@@ -76,9 +76,11 @@ class ControllerPipeline:
     ) -> VehicleCommand:
         longitudinal = self.allocator.allocate(output.signed_accel_des_mps2, state.vx)
         return VehicleCommand(
-            steering_wheel_angle_rad=output.steering_des_rad,
-            drive_torque_nm=longitudinal.drive_torque_nm,
+            steering_wheel_angle_deg=output.steering_des_deg,
+            drive_wheel_torque_nm=longitudinal.drive_wheel_torque_nm,
+            drive_valid=longitudinal.drive_valid,
             brake_decel_mps2=longitudinal.brake_decel_mps2,
+            brake_valid=longitudinal.brake_valid,
             source=source,
             reason=reason,
         )
@@ -136,9 +138,11 @@ class ControllerPipeline:
         )
         fallback_command = self.limiter.limit(fallback_candidate, self.previous_command, dt)
         fallback_command = VehicleCommand(
-            steering_wheel_angle_rad=fallback_command.steering_wheel_angle_rad,
-            drive_torque_nm=fallback_command.drive_torque_nm,
+            steering_wheel_angle_deg=fallback_command.steering_wheel_angle_deg,
+            drive_wheel_torque_nm=fallback_command.drive_wheel_torque_nm,
+            drive_valid=fallback_command.drive_valid,
             brake_decel_mps2=fallback_command.brake_decel_mps2,
+            brake_valid=fallback_command.brake_valid,
             source=CommandSource.FALLBACK,
             reason="fallback",
         )
@@ -147,9 +151,11 @@ class ControllerPipeline:
         if not validation.valid:
             self.previous_command = fallback_command
             command = VehicleCommand(
-                steering_wheel_angle_rad=fallback_command.steering_wheel_angle_rad,
-                drive_torque_nm=fallback_command.drive_torque_nm,
+                steering_wheel_angle_deg=fallback_command.steering_wheel_angle_deg,
+                drive_wheel_torque_nm=fallback_command.drive_wheel_torque_nm,
+                drive_valid=fallback_command.drive_valid,
                 brake_decel_mps2=fallback_command.brake_decel_mps2,
+                brake_valid=fallback_command.brake_valid,
                 source=CommandSource.FALLBACK,
                 reason=validation.reason,
             )
@@ -179,9 +185,11 @@ class ControllerPipeline:
         command = decision.command
         if decision.action.value == "fallback":
             command = VehicleCommand(
-                steering_wheel_angle_rad=command.steering_wheel_angle_rad,
-                drive_torque_nm=command.drive_torque_nm,
+                steering_wheel_angle_deg=command.steering_wheel_angle_deg,
+                drive_wheel_torque_nm=command.drive_wheel_torque_nm,
+                drive_valid=command.drive_valid,
                 brake_decel_mps2=command.brake_decel_mps2,
+                brake_valid=command.brake_valid,
                 source=CommandSource.FALLBACK,
                 reason=decision.reason,
             )

@@ -9,8 +9,14 @@ from vehicle_controller.vehicle.parameter_loader import ActuatorLimits, VehicleP
 
 @dataclass(frozen=True)
 class LongitudinalCommand:
-    drive_torque_nm: float
+    drive_wheel_torque_nm: float
+    drive_valid: bool
     brake_decel_mps2: float
+    brake_valid: bool
+
+    @property
+    def drive_torque_nm(self) -> float:
+        return self.drive_wheel_torque_nm
 
 
 class LongitudinalAllocator:
@@ -28,11 +34,13 @@ class LongitudinalAllocator:
         deadband = self.limits.longitudinal_deadband_mps2
         if signed_accel_mps2 < -deadband:
             return LongitudinalCommand(
-                drive_torque_nm=0.0,
+                drive_wheel_torque_nm=0.0,
+                drive_valid=False,
                 brake_decel_mps2=min(-signed_accel_mps2, self.limits.brake_decel_max_mps2),
+                brake_valid=True,
             )
         if signed_accel_mps2 <= deadband:
-            return LongitudinalCommand(0.0, 0.0)
+            return LongitudinalCommand(0.0, True, 0.0, False)
 
         rolling_accel = self.vehicle.rolling_resistance_coefficient * self.gravity_mps2
         drag_force = (
@@ -44,11 +52,9 @@ class LongitudinalAllocator:
         )
         required_force = self.vehicle.mass_kg * (signed_accel_mps2 + rolling_accel) + drag_force
         wheel_torque = required_force * self.vehicle.wheel_radius_m
-        drive_torque = wheel_torque / (
-            self.vehicle.drivetrain_ratio * self.vehicle.drivetrain_efficiency
-        )
         return LongitudinalCommand(
-            drive_torque_nm=min(max(drive_torque, 0.0), self.limits.drive_torque_max_nm),
+            drive_wheel_torque_nm=min(max(wheel_torque, 0.0), self.limits.drive_torque_max_nm),
+            drive_valid=True,
             brake_decel_mps2=0.0,
+            brake_valid=False,
         )
-

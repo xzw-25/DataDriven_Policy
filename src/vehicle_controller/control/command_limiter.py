@@ -17,6 +17,14 @@ class CommandLimiter:
     def __init__(self, limits: ActuatorLimits) -> None:
         self.limits = limits
 
+    @property
+    def drive_wheel_torque_max_nm(self) -> float:
+        return self.limits.drive_torque_max_nm
+
+    @property
+    def drive_wheel_torque_rate_max_nmps(self) -> float:
+        return self.limits.drive_torque_rate_max_nmps
+
     def limit(
         self,
         command: VehicleCommand,
@@ -28,8 +36,8 @@ class CommandLimiter:
         if not all(
             math.isfinite(value)
             for value in (
-                command.steering_wheel_angle_rad,
-                command.drive_torque_nm,
+                command.steering_wheel_angle_deg,
+                command.drive_wheel_torque_nm,
                 command.brake_decel_mps2,
             )
         ):
@@ -45,11 +53,14 @@ class CommandLimiter:
             self.limits.steering_rate_max_radps,
             dt,
         )
-        drive_torque = min(max(command.drive_torque_nm, 0.0), self.limits.drive_torque_max_nm)
+        drive_torque = min(
+            max(command.drive_wheel_torque_nm, 0.0),
+            self.drive_wheel_torque_max_nm,
+        )
         drive_torque = _rate_limit(
             drive_torque,
-            previous.drive_torque_nm,
-            self.limits.drive_torque_rate_max_nmps,
+            previous.drive_wheel_torque_nm,
+            self.drive_wheel_torque_rate_max_nmps,
             dt,
         )
         brake_decel = min(
@@ -69,15 +80,16 @@ class CommandLimiter:
             abs(first - second) > 1e-9
             for first, second in (
                 (steering, command.steering_wheel_angle_rad),
-                (drive_torque, command.drive_torque_nm),
+                (drive_torque, command.drive_wheel_torque_nm),
                 (brake_decel, command.brake_decel_mps2),
             )
         )
         return VehicleCommand(
             steering_wheel_angle_rad=steering,
-            drive_torque_nm=drive_torque,
+            drive_wheel_torque_nm=drive_torque,
+            drive_valid=drive_torque > 0.0,
             brake_decel_mps2=brake_decel,
+            brake_valid=brake_decel > 0.0,
             source=CommandSource.LIMITED_NEURAL if changed else command.source,
             reason="command_limited" if changed else command.reason,
         )
-

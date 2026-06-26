@@ -694,14 +694,16 @@ signed_accel_des: m/s^2
 ### 10.3 最终车辆指令
 
 ```text
-steering_wheel_angle_cmd: rad
-drive_torque_cmd: N*m, >= 0
+steering_wheel_angle_cmd: deg
+drive_wheel_torque_cmd: N*m, >= 0
+drive_valid: bool
 brake_decel_cmd: m/s^2, >= 0
+brake_valid: bool
 source: neural | limited_neural | fallback
 reason: safety decision code
 ```
 
-神经网络控制器的方向盘物理输出使用 deg；最终车辆指令、执行器限幅和动力学模型仍使用 rad，由控制 pipeline 做单位转换。
+神经网络控制器和最终车辆指令的方向盘物理输出均使用 deg；执行器限幅和动力学模型需要 rad 时，通过 `VehicleCommand.steering_wheel_angle_rad` 兼容属性转换。
 
 任何时刻必须满足：
 

@@ -17,6 +17,8 @@ def test_command_limiter_applies_rate_and_brake_priority() -> None:
         0.1,
     )
     assert limited.steering_wheel_angle_rad == pytest.approx(0.6)
-    assert limited.drive_torque_nm == 0.0
+    assert limited.steering_wheel_angle_deg == pytest.approx(34.3774677)
+    assert limited.drive_wheel_torque_nm == 0.0
+    assert not limited.drive_valid
     assert limited.brake_decel_mps2 == pytest.approx(1.0)
-
+    assert limited.brake_valid

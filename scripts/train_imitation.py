@@ -242,6 +242,14 @@ def physical_targets_from_npz(
     return values[mask]
 
 
+def physical_features_from_npz(data: np.lib.npyio.NpzFile, mask: np.ndarray) -> np.ndarray:
+    feature_key = "raw_features" if "raw_features" in data else "features"
+    values = np.asarray(data[feature_key], dtype=np.float64)
+    if values.ndim != 2 or values.shape[0] != len(mask):
+        raise ValueError(f"{feature_key} must be frame-aligned with features")
+    return values[mask]
+
+
 def physical_error_metrics(predicted: np.ndarray, target: np.ndarray) -> dict[str, float]:
     error = np.asarray(predicted, dtype=np.float64) - np.asarray(target, dtype=np.float64)
     return {
@@ -284,7 +292,7 @@ def save_split_output_comparison(
     with np.load(dataset_path, allow_pickle=False) as data:
         mask = valid_sample_mask(data)
         scales = target_scales_from_metadata(data, model_config)
-        features = np.asarray(data["features"], dtype=np.float64)[mask]
+        physical_features = physical_features_from_npz(data, mask)
         feature_names = (
             tuple(str(value) for value in data["feature_names"])
             if "feature_names" in data
@@ -360,7 +368,7 @@ def save_split_output_comparison(
     for plot_path in plot_paths:
         print(f"{split_name}_comparison_plot={plot_path}")
     feature_plot_paths = save_feature_signal_plots(
-        features,
+        physical_features,
         split_output / "feature_signals",
         timestamps_s=None if timestamps_s is None else np.asarray(timestamps_s, dtype=np.float64),
         scenario_ids=None if scenario_ids is None else np.asarray(scenario_ids).astype(str),

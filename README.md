@@ -136,11 +136,19 @@ python3 scripts/build_features_from_raw_data.py \
   --raw-data data/interim/clean_ad_policy_sim_v1_aba9e399_raw_data.pkl \
   --output data/processed/clean_ad_policy_sim_v1_aba9e399_imitation_dataset.npz
 
-# 3. 一键构建 NPZ、自动划分 train/val/test，并运行模仿学习训练
+# 3A. 一键构建 NPZ、自动划分 train/val/test，并运行模仿学习训练
+#     注意：该命令会执行第 2 步的特征提取/NPZ 构建逻辑。
 python3 scripts/train_imitation_from_raw_data.py \
   --raw-data data/interim/clean_ad_policy_sim_v1_aba9e399_raw_data.pkl \
   --dataset-output data/processed/clean_ad_policy_sim_v1_aba9e399_imitation_dataset.npz \
   --checkpoint-output artifacts/checkpoints/raw_data_imitation.pt \
+  --epochs 10
+
+# 3B. 如果第 2 步已经生成 NPZ，可直接复用已有 NPZ 训练，避免重复特征提取
+python3 scripts/train_imitation.py \
+  --config configs/default.yaml \
+  --dataset data/processed/clean_ad_policy_sim_v1_aba9e399_imitation_dataset.npz \
+  --output artifacts/checkpoints/raw_data_imitation.pt \
   --epochs 10
 
 # 4. 可选：对完整数据集再次执行监督验证
@@ -264,10 +272,10 @@ steering_wheel_angle_cmd_deg, signed_acceleration_cmd
 之后由纵向分配模块生成互斥的：
 
 ```text
-drive_torque_cmd, brake_decel_cmd
+drive_wheel_torque_cmd_nm, drive_valid, brake_decel_cmd_mps2, brake_valid
 ```
 
-车辆执行器和动力学模型内部仍使用 rad，控制 pipeline 会在写入 `VehicleCommand.steering_wheel_angle_rad` 前完成 `deg -> rad` 转换。
+最终 `VehicleCommand` 对外保持方向盘转角 deg；车辆动力学模型可通过兼容属性 `steering_wheel_angle_rad` 转为 rad 使用。
 
 绘图中的控制量命名约定：
 
@@ -430,7 +438,7 @@ python3 scripts/plot_reference_trajectories.py \
 
 #### 0.4 模仿学习训练
 
-可分两步运行：
+方式 A：先构建 NPZ，再复用已有 NPZ 训练。适合已经完成特征提取、只想调整训练参数或重新训练的情况。
 
 ```bash
 python3 scripts/build_features_from_raw_data.py \
@@ -440,10 +448,11 @@ python3 scripts/build_features_from_raw_data.py \
 python3 scripts/train_imitation.py \
   --config configs/default.yaml \
   --dataset data/processed/clean_ad_policy_sim_v1_aba9e399_imitation_dataset.npz \
-  --output artifacts/checkpoints/raw_data_imitation.pt
+  --output artifacts/checkpoints/raw_data_imitation.pt \
+  --epochs 50
 ```
 
-也可以一键构建数据并训练：
+方式 B：一键从 raw data 构建 NPZ 并训练。该方式会执行与 `build_features_from_raw_data.py` 相同的特征提取/NPZ 构建逻辑；如果已经手动运行过上面的构建步骤，再运行此命令会重复构建 `--dataset-output` 指向的 NPZ。
 
 ```bash
 python3 scripts/train_imitation_from_raw_data.py \
@@ -549,6 +558,27 @@ artifacts/reports/supervised_validation/
   raw_data_imitation_predictions.npz
   raw_data_imitation_<clip_id>_control_comparison.png
 ```
+
+#### 0.5.1 完整 NPZ 物理量分布分析
+
+如需检查完整训练 NPZ 中方向盘角度指令分布，并把所有 clip 的 21 维物理特征曲线绘制在同一张图中，可运行：
+
+```bash
+python3 scripts/plot_training_npz_physical_summary.py \
+  data/processed/clean_ad_policy_sim_v1_aba9e399_imitation_dataset.npz \
+  --output-dir artifacts/reports/training_npz_summary
+```
+
+输出：
+
+```text
+artifacts/reports/training_npz_summary/
+  steering_command_histogram.png
+  physical_features_all_clips.png
+  steering_command_stats.json
+```
+
+脚本默认按 `target_valid_mask` 过滤为训练有效样本；方向盘指令优先使用 `physical_targets[:, 0]`，物理特征优先使用 `raw_features`。旧 NPZ 缺少物理字段时，会回退到 `targets` 反归一化或 `features`。
 
 #### 0.6 闭环评估测试
 
@@ -682,7 +712,7 @@ python3 scripts/evaluate_offline.py \
 artifacts/reports/offline_validation/
 ```
 
-验证集场景图会优先使用生成数据时保存的 `physical_targets`，保证 expert 曲线和网络输出都在物理单位下对齐。
+验证集场景图会优先使用生成数据时保存的 `physical_targets`，保证 expert 曲线和网络输出都在物理单位下对齐。`feature_signals` 曲线会优先使用 `raw_features`，保证 21 维输入特征也按真实物理量绘制；旧数据集中没有 `raw_features` 时才回退到 `features`。
 
 ### 6. 闭环验证
 

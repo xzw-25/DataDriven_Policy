@@ -1,3 +1,5 @@
+import math
+
 import torch
 from torch import Tensor, nn
 
@@ -32,7 +34,11 @@ def test_pipeline_produces_finite_mutually_exclusive_command() -> None:
         0.01,
     )
     assert command.source in (CommandSource.NEURAL, CommandSource.LIMITED_NEURAL)
-    assert command.drive_torque_nm * command.brake_decel_mps2 == 0.0
+    assert math.isfinite(command.steering_wheel_angle_deg)
+    assert math.isfinite(command.drive_wheel_torque_nm)
+    assert math.isfinite(command.brake_decel_mps2)
+    assert not (command.drive_valid and command.brake_valid)
+    assert command.drive_wheel_torque_nm * command.brake_decel_mps2 == 0.0
     assert pipeline.last_diagnostics is not None
     assert pipeline.last_diagnostics.neural_output is not None
     assert pipeline.last_diagnostics.final_command == command

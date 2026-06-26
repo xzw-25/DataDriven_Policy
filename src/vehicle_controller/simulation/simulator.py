@@ -23,13 +23,10 @@ def command_to_longitudinal_acceleration(
     command: VehicleCommand,
     parameters: VehicleParameters,
 ) -> float:
-    acceleration = -command.brake_decel_mps2
-    if command.drive_torque_nm > 0.0:
-        acceleration += (
-            command.drive_torque_nm
-            * parameters.drivetrain_ratio
-            * parameters.drivetrain_efficiency
-            / (parameters.mass_kg * parameters.wheel_radius_m)
+    acceleration = -command.brake_decel_mps2 if command.brake_valid else 0.0
+    if command.drive_valid and command.drive_wheel_torque_nm > 0.0:
+        acceleration += command.drive_wheel_torque_nm / (
+            parameters.mass_kg * parameters.wheel_radius_m
         )
     return acceleration
 

@@ -34,12 +34,14 @@ class SafetySupervisor:
         errors: TrackingErrors,
     ) -> SafetyDecision:
         command_values = (
-            candidate.steering_wheel_angle_rad,
-            candidate.drive_torque_nm,
+            candidate.steering_wheel_angle_deg,
+            candidate.drive_wheel_torque_nm,
             candidate.brake_decel_mps2,
         )
         if not all(math.isfinite(value) for value in command_values):
             return SafetyDecision(SafetyAction.FALLBACK, "non_finite_command", fallback)
+        if candidate.drive_valid and candidate.brake_valid:
+            return SafetyDecision(SafetyAction.FALLBACK, "conflicting_longitudinal_command", fallback)
         if abs(errors.e_lat) > self.limits.lateral_error_max_m:
             return SafetyDecision(SafetyAction.FALLBACK, "lateral_error_limit", fallback)
         if abs(state.ay) > self.limits.lateral_accel_max_mps2:
