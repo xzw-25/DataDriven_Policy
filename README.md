@@ -17,7 +17,7 @@
 ## 整体框架
 
 ```text
-典型场景仿真数据                 原始 PKL 数据
+典型场景仿真数据                 原始 PKL 数据.
     |                               |
     v                               v
 专家控制器 + 车辆模型闭环仿真      task_manifest + record_pkl 切片
@@ -141,7 +141,7 @@ python3 scripts/train_imitation_from_raw_data.py \
   --raw-data data/interim/clean_ad_policy_sim_v1_aba9e399_raw_data.pkl \
   --dataset-output data/processed/clean_ad_policy_sim_v1_aba9e399_imitation_dataset.npz \
   --checkpoint-output artifacts/checkpoints/raw_data_imitation.pt \
-  --epochs 50
+  --epochs 10
 
 # 4. 可选：对完整数据集再次执行监督验证
 python3 scripts/validate_supervised_controller.py \

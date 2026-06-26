@@ -2,6 +2,7 @@ raw_dir: data/raw
 processed_dir: data/processed
 split_dir: data/splits
 sample_period_s: 0.01
+split_chunk_duration_s: 5.0
 preview_times_s: [0.1, 0.2, 0.3, 0.4, 0.5]
 curvature_mode: lookahead_weighted_mean
 curvature_weights: [1.0, 0.8, 0.6, 0.4, 0.2]

@@ -48,6 +48,9 @@ def make_record(frame_count: int) -> dict:
                     "target_longitudinal_acceleration": index.astype(np.float32) * 0.2,
                     "target_longitudinal_torque": index.astype(np.float32) * 0.3,
                 },
+                "longitudinal_status": {
+                    "standstill_request": (index % 2 == 0),
+                },
             },
         }
     }
@@ -113,6 +116,10 @@ def test_extract_task_raw_data_slices_and_concatenates_parts(tmp_path):
     np.testing.assert_array_equal(
         raw_data["control_signal"]["command"]["target_longitudinal_acceleration"],
         np.array([0.4, 0.6, 0.8, 1.4, 1.6], dtype=np.float32),
+    )
+    np.testing.assert_array_equal(
+        raw_data["control_signal"]["longitudinal_status"]["standstill_request"],
+        np.array([True, False, True, False, True]),
     )
     assert raw_data["parts"][0]["frame_count"] == 3
     assert raw_data["parts"][1]["frame_count"] == 2

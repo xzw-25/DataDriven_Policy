@@ -17,8 +17,11 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - used when imported as scripts.*
     from scripts._bootstrap import PROJECT_ROOT
 
-from vehicle_controller.data.feature_builder import build_raw_feature_dataset
-from vehicle_controller.data.split import split_scenarios
+from vehicle_controller.data.feature_builder import (
+    STANDSTILL_REQUEST_NPZ_KEY,
+    STANDSTILL_REQUEST_SIGNAL_NAME,
+    build_raw_feature_dataset,
+)
 from vehicle_controller.features.normalizer import FeatureNormalizer
 from vehicle_controller.units import steering_limit_deg_from_config
 from vehicle_controller.utils.config import load_yaml
@@ -61,43 +64,88 @@ def _normalized_split_ratios(
     return train_ratio / total, validation_ratio / total, test_ratio / total
 
 
-def _split_indices_by_count(
+def _split_chunk_frame_count(data_config: Mapping[str, object]) -> int:
+    if "split_chunk_frame_count" in data_config:
+        value = int(data_config["split_chunk_frame_count"])
+    else:
+        chunk_duration_s = float(data_config.get("split_chunk_duration_s", 5.0))
+        if chunk_duration_s <= 0.0:
+            raise ValueError("split_chunk_duration_s must be positive")
+        sample_period_s = float(data_config.get("sample_period_s", 0.01))
+        if sample_period_s <= 0.0:
+            raise ValueError("sample_period_s must be positive")
+        value = int(round(chunk_duration_s / sample_period_s))
+    if value <= 0:
+        raise ValueError("split_chunk_frame_count must be positive")
+    return value
+
+
+def _contiguous_ranges(values: np.ndarray | None, count: int) -> list[tuple[int, int]]:
+    if count <= 0:
+        raise ValueError("Cannot split an empty dataset")
+    if values is None:
+        return [(0, count)]
+    array = np.asarray(values).astype(str)
+    if array.shape != (count,):
+        raise ValueError("scenario_ids/clip_ids must have shape [N]")
+    starts = [0]
+    for index in range(1, count):
+        if array[index] != array[index - 1]:
+            starts.append(index)
+    starts.append(count)
+    return [(starts[index], starts[index + 1]) for index in range(len(starts) - 1)]
+
+
+def _chunk_indices(
+    count: int,
+    *,
+    chunk_frame_count: int,
+    group_values: np.ndarray | None,
+) -> list[np.ndarray]:
+    if chunk_frame_count <= 0:
+        raise ValueError("chunk_frame_count must be positive")
+    chunks: list[np.ndarray] = []
+    for start, stop in _contiguous_ranges(group_values, count):
+        for chunk_start in range(start, stop, chunk_frame_count):
+            chunk_stop = min(chunk_start + chunk_frame_count, stop)
+            chunks.append(np.arange(chunk_start, chunk_stop, dtype=np.int64))
+    if not chunks:
+        raise ValueError("Cannot split an empty dataset")
+    return chunks
+
+
+def _split_indices_by_chunks(
     count: int,
     train_ratio: float,
     validation_ratio: float,
     seed: int,
+    *,
+    chunk_frame_count: int,
+    group_values: np.ndarray | None = None,
 ) -> dict[str, np.ndarray]:
-    if count <= 0:
-        raise ValueError("Cannot split an empty dataset")
-    indices = np.arange(count, dtype=np.int64)
-    rng = np.random.default_rng(seed)
-    rng.shuffle(indices)
-    train_end = int(count * train_ratio)
-    validation_end = train_end + int(count * validation_ratio)
-    return {
-        "train": np.sort(indices[:train_end]),
-        "val": np.sort(indices[train_end:validation_end]),
-        "test": np.sort(indices[validation_end:]),
-    }
-
-
-def _split_indices_by_scenario(
-    scenario_ids: np.ndarray,
-    train_ratio: float,
-    validation_ratio: float,
-    seed: int,
-) -> dict[str, np.ndarray]:
-    train_ids, validation_ids, test_ids = split_scenarios(
-        [str(value) for value in scenario_ids],
-        train_ratio,
-        validation_ratio,
-        seed=seed,
+    chunks = _chunk_indices(
+        count,
+        chunk_frame_count=chunk_frame_count,
+        group_values=group_values,
     )
-    scenario_values = np.asarray([str(value) for value in scenario_ids])
+    chunk_indices = np.arange(len(chunks), dtype=np.int64)
+    rng = np.random.default_rng(seed)
+    rng.shuffle(chunk_indices)
+    train_end = int(len(chunk_indices) * train_ratio)
+    validation_end = train_end + int(len(chunk_indices) * validation_ratio)
+    split_chunk_indices = {
+        "train": chunk_indices[:train_end],
+        "val": chunk_indices[train_end:validation_end],
+        "test": chunk_indices[validation_end:],
+    }
+    empty = np.asarray([], dtype=np.int64)
     return {
-        "train": np.flatnonzero(np.isin(scenario_values, list(train_ids))).astype(np.int64),
-        "val": np.flatnonzero(np.isin(scenario_values, list(validation_ids))).astype(np.int64),
-        "test": np.flatnonzero(np.isin(scenario_values, list(test_ids))).astype(np.int64),
+        name: (
+            np.concatenate([chunks[index] for index in indices]).astype(np.int64)
+            if len(indices)
+            else empty.copy()
+        )
+        for name, indices in split_chunk_indices.items()
     }
 
 
@@ -106,23 +154,23 @@ def _split_indices_from_npz(
     train_ratio: float,
     validation_ratio: float,
     seed: int,
+    *,
+    chunk_frame_count: int,
 ) -> dict[str, np.ndarray]:
     count = int(npz["features"].shape[0])
+    group_values = None
     if "scenario_ids" in npz:
-        return _split_indices_by_scenario(
-            np.asarray(npz["scenario_ids"]),
-            train_ratio,
-            validation_ratio,
-            seed,
-        )
-    if "clip_ids" in npz:
-        return _split_indices_by_scenario(
-            np.asarray(npz["clip_ids"]),
-            train_ratio,
-            validation_ratio,
-            seed,
-        )
-    return _split_indices_by_count(count, train_ratio, validation_ratio, seed)
+        group_values = np.asarray(npz["scenario_ids"])
+    elif "clip_ids" in npz:
+        group_values = np.asarray(npz["clip_ids"])
+    return _split_indices_by_chunks(
+        count,
+        train_ratio,
+        validation_ratio,
+        seed,
+        chunk_frame_count=chunk_frame_count,
+        group_values=group_values,
+    )
 
 
 def _metadata_with_split(
@@ -132,6 +180,7 @@ def _metadata_with_split(
     split_indices: np.ndarray,
     split_counts: Mapping[str, int],
     split_seed: int,
+    chunk_frame_count: int,
 ) -> np.ndarray:
     metadata = dict(json.loads(str(metadata_value)))
     metadata["split"] = {
@@ -140,6 +189,8 @@ def _metadata_with_split(
         "indices": [int(value) for value in split_indices],
         "all_counts": {name: int(count) for name, count in split_counts.items()},
         "seed": int(split_seed),
+        "strategy": "shuffled_contiguous_frame_chunks",
+        "chunk_frame_count": int(chunk_frame_count),
     }
     return np.asarray(json.dumps(metadata, sort_keys=True))
 
@@ -151,6 +202,7 @@ def _split_npz_payload(
     split_name: str,
     split_counts: Mapping[str, int],
     split_seed: int,
+    chunk_frame_count: int,
 ) -> dict[str, np.ndarray]:
     frame_count = int(npz["features"].shape[0])
     payload: dict[str, np.ndarray] = {}
@@ -163,6 +215,7 @@ def _split_npz_payload(
                 split_indices=indices,
                 split_counts=split_counts,
                 split_seed=split_seed,
+                chunk_frame_count=chunk_frame_count,
             )
         elif value.shape and value.shape[0] == frame_count:
             payload[key] = value[indices].copy()
@@ -178,13 +231,20 @@ def write_train_val_test_splits(
     train_ratio: float,
     validation_ratio: float,
     seed: int,
+    chunk_frame_count: int = 500,
 ) -> dict[str, Path]:
     dataset = project_path(dataset_path)
     output_dir = project_path(split_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     with np.load(dataset, allow_pickle=False) as npz:
-        split_indices = _split_indices_from_npz(npz, train_ratio, validation_ratio, seed)
+        split_indices = _split_indices_from_npz(
+            npz,
+            train_ratio,
+            validation_ratio,
+            seed,
+            chunk_frame_count=chunk_frame_count,
+        )
         split_counts = {name: int(len(indices)) for name, indices in split_indices.items()}
         split_paths = {
             name: output_dir / f"{dataset.stem}_{name}.npz"
@@ -197,6 +257,7 @@ def write_train_val_test_splits(
                 split_name=name,
                 split_counts=split_counts,
                 split_seed=seed,
+                chunk_frame_count=chunk_frame_count,
             )
             np.savez_compressed(path, **payload)
     return split_paths
@@ -249,6 +310,8 @@ def build_features_from_raw_data(
         steering_scale_deg=steering_limit_deg_from_config(model_config),
         acceleration_scale_mps2=float(model_config["accel_limit_mps2"]),
     )
+    split_chunk_duration_s = float(data_config.get("split_chunk_duration_s", 5.0))
+    split_chunk_frame_count = _split_chunk_frame_count(data_config)
     metadata = {
         "source_raw_data_path": str(input_path),
         "source_summary": raw_dataset.get("summary", {}),
@@ -268,6 +331,12 @@ def build_features_from_raw_data(
         if lookahead_distances_m is None
         else list(lookahead_distances_m),
         "curvature_weights": list(curvature_weights),
+        "standstill_request_signal_name": STANDSTILL_REQUEST_SIGNAL_NAME,
+        "split_strategy": {
+            "name": "shuffled_contiguous_frame_chunks",
+            "chunk_duration_s": split_chunk_duration_s,
+            "chunk_frame_count": int(split_chunk_frame_count),
+        },
         "entry_count": int(len(entries)),
         "frame_count": int(dataset.raw_features.shape[0]),
     }
@@ -279,6 +348,7 @@ def build_features_from_raw_data(
         train_ratio=train_ratio,
         validation_ratio=validation_ratio,
         seed=int(main_config.get("seed", 42)),
+        chunk_frame_count=split_chunk_frame_count,
     )
     return saved_path
 
@@ -343,6 +413,7 @@ def main() -> None:
         data["targets_shape"] = tuple(npz["targets"].shape)
         data["valid_targets"] = int(npz["target_valid_mask"].sum())
         data["physical_targets_shape"] = tuple(npz["physical_targets"].shape)
+        data["standstill_requests_shape"] = tuple(npz[STANDSTILL_REQUEST_NPZ_KEY].shape)
         data["frame_count"] = metadata["frame_count"]
         data["features_are_normalized"] = metadata["features_are_normalized"]
     print(f"output={output}")
@@ -350,6 +421,7 @@ def main() -> None:
     print(f"raw_features_shape={data['raw_features_shape']}")
     print(f"targets_shape={data['targets_shape']}")
     print(f"physical_targets_shape={data['physical_targets_shape']}")
+    print(f"standstill_requests_shape={data['standstill_requests_shape']}")
     print(f"valid_targets={data['valid_targets']}")
     print(f"features_are_normalized={data['features_are_normalized']}")
     print(f"frames={data['frame_count']}")

@@ -5,12 +5,14 @@ import pytest
 
 from vehicle_controller.constants import FEATURE_COUNT
 from vehicle_controller.data.feature_builder import (
+    STANDSTILL_REQUEST_NPZ_KEY,
     build_raw_feature_dataset,
     build_raw_frame_feature,
     control_target_from_raw_frame,
     longitudinal_reference_point_from_raw_frame,
     reference_absolute_times_from_raw_frame,
     reference_points_from_raw_frame,
+    standstill_request_from_raw_frame,
     vehicle_state_from_raw_pose,
 )
 
@@ -75,6 +77,9 @@ def make_raw_data(frame_count: int = 2) -> dict:
                     dtype=np.float32,
                 ),
                 "target_longitudinal_torque": np.zeros(frame_count, dtype=np.float32),
+            },
+            "longitudinal_status": {
+                "standstill_request": np.zeros(frame_count, dtype=np.int16),
             },
         },
     }
@@ -233,6 +238,16 @@ def test_control_target_from_raw_frame_extracts_steering_and_acceleration():
     np.testing.assert_array_equal(target, np.array([2.5, 1.2], dtype=np.float32))
 
 
+def test_control_target_from_raw_frame_zeroes_acceleration_when_standstill_requested():
+    raw_data = make_raw_data(frame_count=2)
+    raw_data["control_signal"]["longitudinal_status"]["standstill_request"][1] = -1
+
+    target = control_target_from_raw_frame(raw_data, 1)
+
+    np.testing.assert_array_equal(target, np.array([2.5, 0.0], dtype=np.float32))
+    assert standstill_request_from_raw_frame(raw_data, 1)
+
+
 def test_build_raw_feature_dataset_preserves_entry_and_frame_order():
     dataset = build_raw_feature_dataset(
         [
@@ -248,7 +263,26 @@ def test_build_raw_feature_dataset_preserves_entry_and_frame_order():
     assert dataset.features.shape == (3, FEATURE_COUNT)
     np.testing.assert_array_equal(dataset.physical_targets[0], np.array([1.5, 0.2], dtype=np.float32))
     np.testing.assert_array_equal(dataset.targets[0], np.array([0.15, 0.1], dtype=np.float32))
+    assert dataset.standstill_requests.tolist() == [False, False, False]
     assert dataset.target_valid_mask.tolist() == [True, True, True]
     assert dataset.clip_ids.tolist() == ["clip-a", "clip-a", "clip-b"]
     assert dataset.entry_indices.tolist() == [0, 0, 1]
     assert dataset.frame_indices.tolist() == [0, 1, 0]
+
+
+def test_raw_feature_dataset_saves_standstill_request_signal(tmp_path):
+    raw_data = make_raw_data(frame_count=2)
+    raw_data["control_signal"]["longitudinal_status"]["standstill_request"][:] = [0, -1]
+    dataset = build_raw_feature_dataset(
+        [{"clip_id": "clip-a", "raw_data": raw_data}],
+        lookahead_distances_m=(2.0, 5.0, 10.0, 15.0, 20.0),
+        steering_scale_deg=10.0,
+        acceleration_scale_mps2=2.0,
+    )
+
+    output = dataset.save_npz(tmp_path / "features.npz", {})
+
+    with np.load(output, allow_pickle=False) as data:
+        np.testing.assert_array_equal(data[STANDSTILL_REQUEST_NPZ_KEY], np.asarray([False, True]))
+        np.testing.assert_allclose(data["physical_targets"][:, 1], np.asarray([0.2, 0.0]))
+        np.testing.assert_allclose(data["targets"][:, 1], np.asarray([0.1, 0.0]))

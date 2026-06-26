@@ -28,6 +28,8 @@ CONTROL_TARGET_SIGNAL_NAMES = (
     "target_steering_wheel_angle",
     "target_longitudinal_acceleration",
 )
+STANDSTILL_REQUEST_SIGNAL_NAME = "control_signal.longitudinal_status.standstill_request"
+STANDSTILL_REQUEST_NPZ_KEY = "control_signal_longitudinal_status_standstill_request"
 ACCELERATION_REFERENCE_PREVIEW_TIME_S = 0.5
 
 
@@ -35,6 +37,7 @@ ACCELERATION_REFERENCE_PREVIEW_TIME_S = 0.5
 class RawFrameFeature:
     values: np.ndarray
     control_target: np.ndarray
+    standstill_request: bool
     target_valid: bool
     clip_id: str
     entry_index: int
@@ -51,6 +54,7 @@ class RawFeatureDataset:
     raw_features: np.ndarray
     physical_targets: np.ndarray
     targets: np.ndarray
+    standstill_requests: np.ndarray
     target_valid_mask: np.ndarray
     clip_ids: np.ndarray
     entry_indices: np.ndarray
@@ -69,6 +73,8 @@ class RawFeatureDataset:
             raw_features=self.raw_features,
             physical_targets=self.physical_targets,
             targets=self.targets,
+            standstill_requests=self.standstill_requests,
+            **{STANDSTILL_REQUEST_NPZ_KEY: self.standstill_requests},
             target_valid_mask=self.target_valid_mask,
             clip_ids=self.clip_ids,
             scenario_ids=self.clip_ids,
@@ -84,6 +90,7 @@ class RawFeatureDataset:
             feature_names=np.asarray(FEATURE_NAMES),
             target_names=np.asarray(TARGET_NAMES),
             control_target_signal_names=np.asarray(CONTROL_TARGET_SIGNAL_NAMES),
+            standstill_request_signal_name=np.asarray(STANDSTILL_REQUEST_SIGNAL_NAME),
             metadata_json=np.asarray(json.dumps(dict(metadata), sort_keys=True)),
         )
         return output
@@ -283,7 +290,20 @@ def control_target_from_raw_frame(raw_data: Mapping[str, Any], frame_index: int)
     command = raw_data["control_signal"]["command"]
     steering = float(np.asarray(command["target_steering_wheel_angle"])[frame_index])
     acceleration = float(np.asarray(command["target_longitudinal_acceleration"])[frame_index])
+    if standstill_request_from_raw_frame(raw_data, frame_index):
+        acceleration = 0.0
     return np.asarray([steering, acceleration], dtype=np.float32)
+
+
+def standstill_request_from_raw_frame(raw_data: Mapping[str, Any], frame_index: int) -> bool:
+    control_signal = raw_data.get("control_signal")
+    if not isinstance(control_signal, Mapping):
+        return False
+    longitudinal_status = control_signal.get("longitudinal_status")
+    if not isinstance(longitudinal_status, Mapping) or "standstill_request" not in longitudinal_status:
+        return False
+    value = np.asarray(longitudinal_status["standstill_request"])[frame_index]
+    return bool(value)
 
 
 def _interpolate_trajectory_points(
@@ -400,10 +420,12 @@ def build_raw_frame_feature(
         state,
     ).values
     control_target = control_target_from_raw_frame(raw_data, frame_index)
+    standstill_request = standstill_request_from_raw_frame(raw_data, frame_index)
     position = np.asarray(raw_data["pose"]["position"]["position_enu"][frame_index], dtype=np.float64)
     return RawFrameFeature(
         values=features,
         control_target=control_target,
+        standstill_request=standstill_request,
         target_valid=bool(np.all(np.isfinite(control_target))),
         clip_id=clip_id,
         entry_index=entry_index,
@@ -468,6 +490,10 @@ def build_raw_feature_dataset(
         raw_features=raw_features,
         physical_targets=physical_targets,
         targets=targets.astype(np.float32),
+        standstill_requests=np.asarray(
+            [item.standstill_request for item in frame_features],
+            dtype=bool,
+        ),
         target_valid_mask=np.asarray([item.target_valid for item in frame_features], dtype=bool),
         clip_ids=np.asarray([item.clip_id for item in frame_features]),
         entry_indices=np.asarray([item.entry_index for item in frame_features], dtype=np.int32),

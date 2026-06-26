@@ -12,6 +12,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from vehicle_controller.data.dataset import ControllerDataset
+from vehicle_controller.data.feature_builder import STANDSTILL_REQUEST_NPZ_KEY
 from vehicle_controller.models.model_factory import build_model
 from vehicle_controller.training.checkpoint import load_model_state
 from vehicle_controller.training.evaluator import predict
@@ -93,6 +94,13 @@ def optional_filtered_array(data: np.lib.npyio.NpzFile, key: str) -> np.ndarray 
     return values[mask]
 
 
+def optional_standstill_requests(data: np.lib.npyio.NpzFile) -> np.ndarray | None:
+    values = optional_filtered_array(data, STANDSTILL_REQUEST_NPZ_KEY)
+    if values is not None:
+        return values
+    return optional_filtered_array(data, "standstill_requests")
+
+
 def physical_error_metrics(predicted: np.ndarray, target: np.ndarray) -> dict[str, float]:
     error = np.asarray(predicted, dtype=np.float64) - np.asarray(target, dtype=np.float64)
     return {
@@ -140,6 +148,7 @@ def validate_supervised_dataset(
         scenario_ids = optional_filtered_array(data, "scenario_ids")
         clip_ids = optional_filtered_array(data, "clip_ids")
         frame_indices = optional_filtered_array(data, "frame_indices")
+        standstill_requests = optional_standstill_requests(data)
 
     if physical_predictions.shape != physical_targets.shape:
         raise ValueError("Prediction/target shape mismatch after valid-mask filtering")
@@ -161,6 +170,11 @@ def validate_supervised_dataset(
         scenario_ids=scenario_ids if scenario_ids is not None else np.asarray([], dtype=str),
         clip_ids=clip_ids if clip_ids is not None else np.asarray([], dtype=str),
         frame_indices=frame_indices if frame_indices is not None else np.asarray([], dtype=np.int32),
+        standstill_requests=(
+            standstill_requests
+            if standstill_requests is not None
+            else np.asarray([], dtype=bool)
+        ),
     )
 
     metrics_path = output / f"{dataset_label}_metrics.json"
@@ -172,6 +186,7 @@ def validate_supervised_dataset(
         output,
         timestamps_s=timestamps_s,
         scenario_ids=scenario_ids,
+        standstill_requests=standstill_requests,
         dataset_label=dataset_label,
         max_scenarios=max_plot_scenarios,
         maximum_samples_per_plot=max_plot_samples,

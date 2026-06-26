@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 
 from _bootstrap import PROJECT_ROOT
 from vehicle_controller.data.dataset import ControllerDataset
+from vehicle_controller.data.feature_builder import STANDSTILL_REQUEST_NPZ_KEY
 from vehicle_controller.models.model_factory import build_model
 from vehicle_controller.training.checkpoint import load_model_state
 from vehicle_controller.training.evaluator import predict
@@ -57,6 +58,13 @@ def _optional_filtered(data: np.lib.npyio.NpzFile, key: str) -> np.ndarray | Non
     return values
 
 
+def _optional_standstill_requests(data: np.lib.npyio.NpzFile) -> np.ndarray | None:
+    values = _optional_filtered(data, STANDSTILL_REQUEST_NPZ_KEY)
+    if values is not None:
+        return values
+    return _optional_filtered(data, "standstill_requests")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("checkpoint")
@@ -94,12 +102,14 @@ def main() -> None:
     expert_controls = _dataset_expert_controls(data, scales)
     timestamps_s = _optional_filtered(data, "timestamps_s")
     scenario_ids = _optional_filtered(data, "scenario_ids")
+    standstill_requests = _optional_standstill_requests(data)
     plot_paths = save_offline_control_comparison_plots(
         predicted_controls,
         expert_controls,
         project_path(args.output_dir),
         timestamps_s=timestamps_s,
         scenario_ids=scenario_ids,
+        standstill_requests=standstill_requests,
         dataset_label=args.dataset_label,
         max_scenarios=args.max_plot_scenarios,
         maximum_samples_per_plot=args.max_plot_samples,

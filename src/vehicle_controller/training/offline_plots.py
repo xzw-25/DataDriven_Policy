@@ -22,6 +22,8 @@ EXPERT_STEERING_LABEL = "Generated-data expert steering"
 NEURAL_STEERING_LABEL = "Neural controller steering"
 EXPERT_ACCELERATION_LABEL = "Generated-data expert signed acceleration"
 NEURAL_ACCELERATION_LABEL = "Neural controller signed acceleration"
+STANDSTILL_REQUEST_LABEL = "Standstill request"
+STANDSTILL_REQUEST_MISSING_LABEL = "Standstill request (missing; shown as 0)"
 FEATURE_UNITS = {
     "x": "m",
     "y": "m",
@@ -113,6 +115,15 @@ def _as_heading_array(name: str, values: np.ndarray | None) -> np.ndarray | None
     return array
 
 
+def _as_bool_signal_array(name: str, values: np.ndarray | None, length: int) -> np.ndarray | None:
+    if values is None:
+        return None
+    array = np.asarray(values, dtype=bool)
+    if array.shape != (length,):
+        raise ValueError(f"{name} must have shape [N]")
+    return array
+
+
 def _preview_trajectory_points_enu(
     features: np.ndarray,
     positions_enu: np.ndarray,
@@ -130,6 +141,8 @@ def _preview_trajectory_points_enu(
 def _plot_control_comparison(
     predicted_controls: np.ndarray,
     expert_controls: np.ndarray,
+    standstill_requests: np.ndarray,
+    standstill_label: str,
     x_values: np.ndarray,
     x_label: str,
     title: str,
@@ -139,7 +152,7 @@ def _plot_control_comparison(
     plt = load_pyplot(show_plots)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    figure, axes = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+    figure, axes = plt.subplots(3, 1, figsize=(12, 9.5), sharex=True)
     axes[0].plot(x_values, expert_controls[:, 0], label=EXPERT_STEERING_LABEL)
     axes[0].plot(
         x_values,
@@ -160,10 +173,21 @@ def _plot_control_comparison(
         label=NEURAL_ACCELERATION_LABEL,
         alpha=0.9,
     )
-    axes[1].set_xlabel(x_label)
     axes[1].set_ylabel("Signed acceleration [m/s2]")
     axes[1].grid(True, alpha=0.3)
     axes[1].legend(loc="best")
+    axes[2].step(
+        x_values,
+        standstill_requests.astype(np.float64),
+        where="post",
+        label=standstill_label,
+    )
+    axes[2].set_ylim(-0.05, 1.05)
+    axes[2].set_yticks([0.0, 1.0])
+    axes[2].set_ylabel("Standstill request")
+    axes[2].grid(True, alpha=0.3)
+    axes[2].legend(loc="best")
+    axes[-1].set_xlabel(x_label)
     figure.suptitle(title, fontsize=14)
     figure.tight_layout()
     figure.savefig(output_path, dpi=180)
@@ -299,6 +323,7 @@ def save_offline_control_comparison_plots(
     output_dir: str | Path,
     timestamps_s: np.ndarray | None = None,
     scenario_ids: np.ndarray | None = None,
+    standstill_requests: np.ndarray | None = None,
     dataset_label: str = "validation",
     max_scenarios: int | None = 8,
     maximum_samples_per_plot: int = 2000,
@@ -311,6 +336,15 @@ def save_offline_control_comparison_plots(
         raise ValueError("predicted_controls and expert_controls must have matching shapes")
 
     output_path = Path(output_dir)
+    standstill = _as_bool_signal_array(
+        "standstill_requests",
+        standstill_requests,
+        len(predicted),
+    )
+    standstill_label = STANDSTILL_REQUEST_LABEL
+    if standstill is None:
+        standstill = np.zeros(len(predicted), dtype=bool)
+        standstill_label = STANDSTILL_REQUEST_MISSING_LABEL
     if timestamps_s is not None:
         timestamps = np.asarray(timestamps_s, dtype=np.float64)
         if timestamps.shape != (len(predicted),):
@@ -336,6 +370,8 @@ def save_offline_control_comparison_plots(
             _plot_control_comparison(
                 predicted[order],
                 expert[order],
+                standstill[order],
+                standstill_label,
                 x_values,
                 x_label,
                 f"{dataset_label}: Expert and Neural Control Outputs",
@@ -364,6 +400,8 @@ def save_offline_control_comparison_plots(
             _plot_control_comparison(
                 predicted[order],
                 expert[order],
+                standstill[order],
+                standstill_label,
                 x_values,
                 x_label,
                 f"{dataset_label}: {scenario_id} Expert and Neural Control Outputs",

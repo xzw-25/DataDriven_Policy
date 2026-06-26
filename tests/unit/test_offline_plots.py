@@ -29,6 +29,7 @@ def test_offline_control_plot_writes_one_file_per_selected_scenario(tmp_path) ->
     predicted = expert + 0.05
     timestamps = np.asarray([0.0, 0.1, 0.2, 0.0, 0.1, 0.2], dtype=np.float32)
     scenario_ids = np.asarray(["scenario/a"] * 3 + ["scenario/b"] * 3)
+    standstill_requests = np.asarray([False, True, False, False, False, True])
 
     paths = save_offline_control_comparison_plots(
         predicted,
@@ -36,6 +37,7 @@ def test_offline_control_plot_writes_one_file_per_selected_scenario(tmp_path) ->
         tmp_path,
         timestamps_s=timestamps,
         scenario_ids=scenario_ids,
+        standstill_requests=standstill_requests,
         max_scenarios=1,
     )
 

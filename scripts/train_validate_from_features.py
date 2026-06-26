@@ -18,6 +18,7 @@ except ModuleNotFoundError:  # pragma: no cover - used when imported as scripts.
     from scripts._bootstrap import PROJECT_ROOT
 
 from vehicle_controller.data.dataset import ControllerDataset
+from vehicle_controller.data.feature_builder import STANDSTILL_REQUEST_NPZ_KEY
 from vehicle_controller.models.model_factory import build_model
 from vehicle_controller.training.checkpoint import save_checkpoint
 from vehicle_controller.training.evaluator import predict
@@ -98,6 +99,16 @@ def _optional_array(
     if values.shape[0] != data["features"].shape[0]:
         raise ValueError(f"{name} must be frame-aligned with features")
     return values[indices]
+
+
+def _optional_standstill_requests(
+    data: np.lib.npyio.NpzFile,
+    indices: np.ndarray,
+) -> np.ndarray | None:
+    values = _optional_array(data, STANDSTILL_REQUEST_NPZ_KEY, indices)
+    if values is not None:
+        return values
+    return _optional_array(data, "standstill_requests", indices)
 
 
 def _target_scales(metadata: dict[str, Any]) -> np.ndarray | None:
@@ -200,6 +211,7 @@ def train_validate_from_features(
         physical_targets = _optional_array(data, "physical_targets", validation_indices)
         timestamps_s = _optional_array(data, "timestamps_s", validation_indices)
         scenario_ids = _optional_array(data, "scenario_ids", validation_indices)
+        standstill_requests = _optional_standstill_requests(data, validation_indices)
         if scenario_ids is None:
             scenario_ids = _optional_array(data, "clip_ids", validation_indices)
 
@@ -303,6 +315,11 @@ def train_validate_from_features(
         output_path / "validation_plots",
         timestamps_s=None if timestamps_s is None else np.asarray(timestamps_s, dtype=np.float64),
         scenario_ids=None if scenario_ids is None else np.asarray(scenario_ids).astype(str),
+        standstill_requests=(
+            None
+            if standstill_requests is None
+            else np.asarray(standstill_requests, dtype=bool)
+        ),
         dataset_label=f"validation_{plot_units}",
         max_scenarios=max_validation_scenarios,
         show_plots=show_plots,

@@ -16,6 +16,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - used when imported as scripts.*
     from scripts._bootstrap import PROJECT_ROOT
 from vehicle_controller.data.dataset import ControllerDataset
+from vehicle_controller.data.feature_builder import STANDSTILL_REQUEST_NPZ_KEY
 from vehicle_controller.models.model_factory import build_model
 from vehicle_controller.simulation.showcase import run_typical_reference_showcase
 from vehicle_controller.training.checkpoint import save_checkpoint
@@ -220,6 +221,13 @@ def filtered_optional_array(data: np.lib.npyio.NpzFile, key: str, mask: np.ndarr
     return values[mask]
 
 
+def filtered_standstill_requests(data: np.lib.npyio.NpzFile, mask: np.ndarray) -> np.ndarray | None:
+    values = filtered_optional_array(data, STANDSTILL_REQUEST_NPZ_KEY, mask)
+    if values is not None:
+        return values
+    return filtered_optional_array(data, "standstill_requests", mask)
+
+
 def physical_targets_from_npz(
     data: np.lib.npyio.NpzFile,
     mask: np.ndarray,
@@ -286,6 +294,7 @@ def save_split_output_comparison(
         physical_targets = physical_targets_from_npz(data, mask, scales)
         timestamps_s = filtered_optional_array(data, "timestamps_s", mask)
         scenario_ids = filtered_optional_array(data, "scenario_ids", mask)
+        standstill_requests = filtered_standstill_requests(data, mask)
         pose_headings_rad = filtered_optional_array(data, "pose_heading_rad", mask)
         if pose_headings_rad is None:
             pose_headings_rad = filtered_optional_array(data, "headings_rad", mask)
@@ -325,6 +334,11 @@ def save_split_output_comparison(
         target_controls=physical_targets.astype(np.float32),
         timestamps_s=timestamps_s if timestamps_s is not None else np.asarray([], dtype=np.float64),
         scenario_ids=scenario_ids if scenario_ids is not None else np.asarray([], dtype=str),
+        standstill_requests=(
+            standstill_requests
+            if standstill_requests is not None
+            else np.asarray([], dtype=bool)
+        ),
     )
     plot_paths = save_offline_control_comparison_plots(
         physical_predictions,
@@ -332,6 +346,11 @@ def save_split_output_comparison(
         split_output,
         timestamps_s=None if timestamps_s is None else np.asarray(timestamps_s, dtype=np.float64),
         scenario_ids=None if scenario_ids is None else np.asarray(scenario_ids).astype(str),
+        standstill_requests=(
+            None
+            if standstill_requests is None
+            else np.asarray(standstill_requests, dtype=bool)
+        ),
         dataset_label=split_name,
         max_scenarios=max_plot_scenarios,
         maximum_samples_per_plot=max_plot_samples,
